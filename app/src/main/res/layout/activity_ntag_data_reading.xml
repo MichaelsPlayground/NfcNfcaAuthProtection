@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:text="This app reads data with NCFA from a NFC-Tag of type NXP NTAG21x only."
+            android:text="This app reads data with NCFA from a NFC-Tag of type NXP NTAG216 only."
             android:textAlignment="center"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -347,7 +347,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="8dp"
-            android:hint="Page E6"
+            android:hint="Result"
             app:boxCornerRadiusBottomEnd="5dp"
             app:boxCornerRadiusBottomStart="5dp"
             app:boxCornerRadiusTopEnd="5dp"

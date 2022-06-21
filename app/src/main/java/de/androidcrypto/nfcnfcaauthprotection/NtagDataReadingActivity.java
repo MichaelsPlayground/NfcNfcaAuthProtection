@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.TagLostException;
@@ -13,7 +14,11 @@ import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.BackgroundColorSpan;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -44,6 +49,7 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
     }
+
     // This method is run in another thread when a card is discovered
     // !!!! This method cannot cannot direct interact with the UI Thread
     // Use `runOnUiThread` method to change the UI from this method
@@ -56,25 +62,26 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
 
         NfcA nfcA = null;
 
-        try {
-            nfcA = NfcA.get(tag);
+        nfcA = NfcA.get(tag);
 
-            if (nfcA != null) {
-                runOnUiThread(() -> {
-                    Toast.makeText(getApplicationContext(),
-                            "NFC tag is Nfca compatible",
-                            Toast.LENGTH_SHORT).show();
-                });
+        if (nfcA != null) {
+            runOnUiThread(() -> {
+                Toast.makeText(getApplicationContext(),
+                        "NFC tag is Nfca compatible",
+                        Toast.LENGTH_SHORT).show();
+            });
 
-                // Make a Sound
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    ((Vibrator) getSystemService(VIBRATOR_SERVICE)).vibrate(VibrationEffect.createOneShot(150, 10));
-                } else {
-                    Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-                    v.vibrate(200);
-                }
+            // Make a Sound
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ((Vibrator) getSystemService(VIBRATOR_SERVICE)).vibrate(VibrationEffect.createOneShot(150, 10));
+            } else {
+                Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                v.vibrate(200);
+            }
 
+            try {
                 nfcA.connect();
+
 
                 // check that the tag is a NTAG213/215/216 manufactured by NXP - stop if not
                 String ntagVersion = NfcIdentifyNtag.checkNtagType(nfcA, tag.getId());
@@ -102,103 +109,139 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
                 // read the complete memory depending on ntag type
                 byte[] ntagMemory = new byte[ntagMemoryBytes];
                 // read the content of the tag in several runs
-                byte[] response;
                 try {
-                    // one read will read 4 pages of each 4 bytes = 16 bytes
-                    int nfcaReadFullRounds = ntagMemoryBytes / 16; // 55
-                    int nfcaReadFullRoundsTotalBytes = nfcaReadFullRounds * 16; // 880 bytes
-                    int nfcaReadModuloRoundsTotalBytes = ntagMemoryBytes - nfcaReadFullRoundsTotalBytes; // 8 bytes
-                    nfcaContent = nfcaContent + "nfcaReadFullRounds: " + nfcaReadFullRounds + "\n";
-                    nfcaContent = nfcaContent + "nfcaReadFullRoundsTotalBytes: " + nfcaReadFullRoundsTotalBytes + "\n";
-                    nfcaContent = nfcaContent + "nfcaReadModuloRoundsTotalBytes: " + nfcaReadModuloRoundsTotalBytes + "\n";
-                    // do the full readings + 1, we get data from internal data and have to strip them off in the end
-                    for (int i = 0; i <= nfcaReadFullRounds; i++) {
-                        byte[] command = new byte[]{
-                                (byte) 0x30,  // READ
-                                (byte) ((4 + (i * 4)) & 0x0ff), // page 4 is the first user memory page
-                        };
-                        // nfcaContent = nfcaContent + "i: " + i + " command: " + bytesToHex(command) + "\n";
-                        response = nfcA.transceive(command);
-                        if (response == null) {
-                            // either communication to the tag was lost or a NACK was received
-                            // Log and return
-                            nfcaContent = nfcaContent + "ERROR: null response";
-                            String finalNfcaText = nfcaContent;
-                            runOnUiThread(() -> {
-                                readResult.setText(finalNfcaText);
-                                System.out.println(finalNfcaText);
-                            });
-                            return;
-                        } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
-                            // NACK response according to Digital Protocol/T2TOP
-                            // Log and return
-                            nfcaContent = nfcaContent + "ERROR: NACK response: " + bytesToHex(response);
-                            String finalNfcaText = nfcaContent;
-                            runOnUiThread(() -> {
-                                readResult.setText(finalNfcaText);
-                                System.out.println(finalNfcaText);
-                            });
-                            return;
-                        } else {
-                            // success: response contains ACK or actual data
-                            // nfcaContent = nfcaContent + "successful reading " + response.length + " bytes\n";
-                            // nfcaContent = nfcaContent + bytesToHex(response) + "\n";
-                            // copy the response to the ntagMemory
-                            // beware that the last response recieves to many bytes
-                            // NTAG216 does have 888 bytes memory but we already read
-                            // 55 * 16 = 880 bytes, so we should copy 8 bytes only in the last round
-                            if (i < nfcaReadFullRounds) {
-                                System.arraycopy(response, 0, ntagMemory, (16 * i), 16);
-                            } else {
-                                System.arraycopy(response, 0, ntagMemory, (16 * nfcaReadFullRounds), (ntagMemoryBytes - nfcaReadFullRoundsTotalBytes));
-                            }
+                    boolean responseSuccessful;
+                    responseSuccessful = getTagData(nfcA, 00, page00, page01, page02, page03, readResult);
+                    if (!responseSuccessful) return;
+                    responseSuccessful = getTagData(nfcA, 04, page04, page05, null, null, readResult);
+                    if (!responseSuccessful) return;
+                    responseSuccessful = getTagData(nfcA, 226, pageE2, pageE3, pageE4, pageE5, readResult);
+                    if (!responseSuccessful) return;
+                    responseSuccessful = getTagData(nfcA, 230, pageE6, null, null, null, readResult);
+                    if (!responseSuccessful) return;
 
-                        }
-                    }
-                    nfcaContent = nfcaContent + "full reading complete: " + "\n" + bytesToHex(ntagMemory) + "\n";
-
-                } catch (TagLostException e) {
-                    // Log and return
-                    nfcaContent = nfcaContent + "ERROR: Tag lost exception";
-                    String finalNfcaText = nfcaContent;
+                    // highlight the auth0 field
                     runOnUiThread(() -> {
-                        readResult.setText(finalNfcaText);
-                        System.out.println(finalNfcaText);
+                        SpannableString spannableStr = new SpannableString(pageE3.getText().toString());
+                        BackgroundColorSpan backgroundColorSpan = new BackgroundColorSpan(Color.GREEN);
+                        spannableStr.setSpan(backgroundColorSpan, 6, 8, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                        pageE3.setText(spannableStr);
                     });
-                    return;
-                } catch (IOException e) {
 
+                    String finalNfcaRawText = nfcaContent;
+                    String finalNfcaText = "parsed content:\n" + new String(ntagMemory, StandardCharsets.US_ASCII);
+                    runOnUiThread(() -> {
+                        readResult.setText(finalNfcaRawText);
+                        //nfcContentParsed.setText(finalNfcaText);
+                        System.out.println(finalNfcaRawText);
+                    });
+
+                } catch (Exception e) {
+                    //Trying to catch any exception that may be thrown
                     e.printStackTrace();
 
                 }
-                String finalNfcaRawText = nfcaContent;
-                String finalNfcaText = "parsed content:\n" + new String(ntagMemory, StandardCharsets.US_ASCII);
-                runOnUiThread(() -> {
-                    readResult.setText(finalNfcaRawText);
-                    //nfcContentParsed.setText(finalNfcaText);
-                    System.out.println(finalNfcaRawText);
-                });
-            } else {
-                runOnUiThread(() -> {
-                    Toast.makeText(getApplicationContext(),
-                            "NFC tag is NOT Nfca compatible",
-                            Toast.LENGTH_SHORT).show();
-                });
-            }
-        } catch (IOException e) {
-            //Trying to catch any ioexception that may be thrown
-            e.printStackTrace();
-        } catch (Exception e) {
-            //Trying to catch any exception that may be thrown
-            e.printStackTrace();
 
-        } finally {
-            try {
-                nfcA.close();
+                try {
+                    nfcA.close();
+                } catch (IOException e) {
+                }
+
             } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
+
+    private boolean getTagData(NfcA nfcA, int page, EditText pageData1, EditText pageData2, EditText pageData3, EditText pageData4, EditText resultText) {
+        boolean result;
+        byte[] response;
+        byte[] command = new byte[]{
+                (byte) 0x30,  // READ
+                (byte) (page & 0x0ff), // page 0
+        };
+        try {
+            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
+            if (response == null) {
+                // either communication to the tag was lost or a NACK was received
+                runOnUiThread(() -> {
+                    resultText.setText("ERROR: null response");
+                    pageData1.setText("no data");
+                    if (pageData2 != null) {
+                        pageData2.setText("no data");
+                    }
+                    if (pageData3 != null) {
+                        pageData3.setText("no data");
+                    }
+                    if (pageData4 != null) {
+                        pageData4.setText("no data");
+                    }
+                });
+                return false;
+            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
+                // NACK response according to Digital Protocol/T2TOP
+                // Log and return
+                runOnUiThread(() -> {
+                    resultText.setText("ERROR: NACK response: " + bytesToHex(response));
+                    pageData1.setText("response: " + bytesToHex(response));
+                    if (pageData2 != null) {
+                        pageData2.setText("response: " + bytesToHex(response));
+                    }
+                    if (pageData3 != null) {
+                        pageData3.setText("response: " + bytesToHex(response));
+                    }
+                    if (pageData4 != null) {
+                        pageData4.setText("response: " + bytesToHex(response));
+                    }
+                });
+                return false;
+            } else {
+                // success: response contains ACK or actual data
+                runOnUiThread(() -> {
+                    resultText.setText("SUCCESS: response: " + bytesToHex(response));
+                    // split the response
+                    byte[] res1 = new byte[4];
+                    byte[] res2 = new byte[4];
+                    byte[] res3 = new byte[4];
+                    byte[] res4 = new byte[4];
+                    System.arraycopy(response, 0, res1, 0, 4);
+                    System.arraycopy(response, 4, res2, 0, 4);
+                    System.arraycopy(response, 8, res3, 0, 4);
+                    System.arraycopy(response, 12, res4, 0, 4);
+                    pageData1.setText(bytesToHex(res1));
+                    System.out.println("page " + page + ": " + bytesToHex(res1));
+                    if (pageData2 != null) {
+                        pageData2.setText(bytesToHex(res2));
+                        System.out.println("page " + (page + 1) + ": " + bytesToHex(res2));
+                    }
+                    if (pageData3 != null) {
+                        pageData3.setText(bytesToHex(res3));
+                        System.out.println("page " + (page + 2) + ": " + bytesToHex(res3));
+                    }
+                    if (pageData4 != null) {
+                        pageData4.setText(bytesToHex(res4));
+                        System.out.println("page " + (page + 3) + ": " + bytesToHex(res4));
+                    }
+                });
+                System.out.println("page " + page + ": " + bytesToHex(response));
+                result = true;
+            }
+        } catch (TagLostException e) {
+            // Log and return
+            runOnUiThread(() -> {
+                readResult.setText("ERROR: Tag lost exception");
+            });
+            return false;
+        } catch (IOException e) {
+            runOnUiThread(() -> {
+                resultText.setText("IOException: " + e.toString());
+            });
+            e.printStackTrace();
+            return false;
+        }
+        return result;
+    }
+
 
     public static String bytesToHex(byte[] bytes) {
         StringBuffer result = new StringBuffer();
@@ -258,3 +301,20 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
             mNfcAdapter.disableReaderMode(this);
     }
 }
+/*
+data original
+I/System.out: page   0: 049e5042
+I/System.out: page   1: 82355b80
+I/System.out: page   2: 6c480000
+I/System.out: page   3: e1106d00
+I/System.out: page   4: 31323334
+I/System.out: page   5: 74746572
+I/System.out: page 226: 000000bd
+I/System.out: page 227: 040000ff
+I/System.out: page 228: 00050000
+I/System.out: page 229: 00000000
+I/System.out: page 230: 00000000
+
+I/System.out: page 227: 040000 ff
+                        Auth0: XX
+ */
