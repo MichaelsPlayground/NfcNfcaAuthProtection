@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         fastRead.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, FastReadActivity.class);
+                Intent intent = new Intent(MainActivity.this, NtagDataReadingActivity.class);
                 startActivity(intent);
             }
         });
