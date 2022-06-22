@@ -17,6 +17,15 @@
         android:theme="@style/Theme.NfcNfcaAuthProtection"
         tools:targetApi="31">
         <activity
+            android:name=".WriteAuthActivity"
+            android:exported="false" />
+        <activity
+            android:name=".FastReadAuthActivity"
+            android:exported="false" />
+        <activity
+            android:name=".RemoveWriteProtectionActivity"
+            android:exported="false" />
+        <activity
             android:name=".NtagDataReadingActivity"
             android:exported="false" />
         <activity

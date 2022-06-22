@@ -13,7 +13,6 @@ import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,62 +20,26 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class MainActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
+public class WriteAuthActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
 
-    com.google.android.material.textfield.TextInputLayout inputFieldDecoration;
-    com.google.android.material.textfield.TextInputEditText inputField;
-
+    com.google.android.material.textfield.TextInputLayout passwordDecoration, packDecoration, inputFieldDecoration;
+    com.google.android.material.textfield.TextInputEditText passwordField, packField, inputField;
     TextView nfcResult;
-    Button fastRead, writeAuth, setWriteProtection, removeWriteProtection;
     private NfcAdapter mNfcAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_write_auth);
 
-        inputField = findViewById(R.id.etMainInputField);
-        inputFieldDecoration = findViewById(R.id.etMainInputFieldDecoration);
-        nfcResult = findViewById(R.id.tvMainNfcaResult);
-        fastRead = findViewById(R.id.btnMainFastRead);
-        writeAuth = findViewById(R.id.btnMainWriteAuth);
-
-        setWriteProtection = findViewById(R.id.btnMainSetWriteProtection);
-        removeWriteProtection = findViewById(R.id.btnMainRemoveWriteProtection);
-
+        inputField = findViewById(R.id.etWriteAuthInputField);
+        inputFieldDecoration = findViewById(R.id.etWriteAuthInputFieldDecoration);
+        nfcResult = findViewById(R.id.tvWriteAuthNfcaResult);
+        passwordField = findViewById(R.id.etWriteAuthPassword);
+        passwordDecoration = findViewById(R.id.etWriteAuthPasswordDecoration);
+        packField = findViewById(R.id.etWriteAuthPack);
+        packDecoration = findViewById(R.id.etWriteAuthPasswordDecoration);
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
-
-        fastRead.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, NtagDataReadingActivity.class);
-                startActivity(intent);
-            }
-        });
-
-        writeAuth.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, WriteAuthActivity.class);
-                startActivity(intent);
-            }
-        });
-
-        setWriteProtection.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-               Intent intent = new Intent(MainActivity.this, SetWriteProtectionActivity.class);
-               startActivity(intent);
-            }
-        });
-
-        removeWriteProtection.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(MainActivity.this, RemoveWriteProtectionActivity.class);
-                startActivity(intent);
-            }
-        });
     }
 
     // This method is run in another thread when a card is discovered
@@ -137,8 +100,52 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 // read the complete memory depending on ntag type
                 byte[] ntagMemory = new byte[ntagMemoryBytes];
                 // read the content of the tag in several runs
-                byte[] response;
+                byte[] response = new byte[0];
                 try {
+
+                    // get data from passwordField
+                    String passwordString = passwordField.getText().toString();
+                    // limitation: exact 4 alphanumerical characters
+                    passwordString = removeAllNonAlphaNumeric(passwordString);
+                    if (passwordString.length() != 4) {
+                        nfcaContent = nfcaContent + "Error: you need to enter exact 4 alphanumerical characters for PASSWORD" + "\n";
+                        writeToUi(nfcResult, nfcaContent);
+                        return;
+                    }
+                    byte[] passwordByte = passwordString.getBytes(StandardCharsets.UTF_8);
+                    int passwordLength = passwordByte.length;
+                    nfcaContent = nfcaContent + "Password: " + passwordString + " hex: " + bytesToHex(passwordByte) + "\n";
+
+                    // get pack from etWriteProtectionPack
+                    String packString = packField.getText().toString();
+                    // limitation: exact 2 alphanumerical characters
+                    packString = removeAllNonAlphaNumeric(packString);
+                    if (packString.length() != 2) {
+                        nfcaContent = nfcaContent + "Error: you need to enter exact 2 alphanumerical characters for PACK" + "\n";
+                        writeToUi(nfcResult, nfcaContent);
+                        return;
+                    }
+                    byte[] packByte = packString.getBytes(StandardCharsets.UTF_8);
+                    int packLength = packByte.length;
+                    nfcaContent = nfcaContent + "Pack: " + packString + " hex: " + bytesToHex(packByte) + "\n";
+                    // as we write a complete page we need to fill up the bytes 3 + 4 with 0x00
+                    byte[] packBytePage = new byte[4];
+                    System.arraycopy(packByte, 0, packBytePage, 0, 2);
+
+                    // send the pwdAuth command
+                    // this is the default value
+                    byte[]  passwordByteDefault = new byte[]{
+                            (byte) (255 & 0x0ff),
+                            (byte) (255 & 0x0ff),
+                            (byte) (255 & 0x0ff),
+                            (byte) (255 & 0x0ff)
+                    };
+                    //passwordByte = passwordByteDefault.clone();
+                    boolean responseSuccessful;
+                    System.out.println("*** start authentication");
+                    responseSuccessful = sendPwdAuthData(nfcA, passwordByte, nfcResult, response);
+                    if (!responseSuccessful) return;
+
                     // get data from InputField
                     String dataString = inputField.getText().toString();
 
@@ -292,6 +299,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
                 } catch(TagLostException e){
                     // Log and return
+                    System.out.println("ERROR: Tag lost exception in body of WriteAuth");
                     nfcaContent = nfcaContent + "ERROR: Tag lost exception";
                     String finalNfcaText = nfcaContent;
                     runOnUiThread(() -> {
@@ -344,10 +352,66 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
     }
 
+    private boolean sendPwdAuthData(NfcA nfcA, byte[] passwordByte, TextView textView,
+                                 byte[] response) {
+        boolean result;
+        //byte[] response;
+        byte[] command = new byte[]{
+                (byte) 0x1B,  // PWD_AUTH
+                passwordByte[0],
+                passwordByte[1],
+                passwordByte[2],
+                passwordByte[3]
+        };
+        try {
+            System.out.println("*** sendPwdAuthData before tranceive");
+            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
+            System.out.println("*** sendPwdAuthData after tranceive");
+            if (response == null) {
+                // either communication to the tag was lost or a NACK was received
+                writeToUiAppend(textView, "ERROR: null response");
+                return false;
+            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
+                // NACK response according to Digital Protocol/T2TOP
+                // Log and return
+                writeToUiAppend(textView, "ERROR: NACK response: " + bytesToHex(response));
+                return false;
+            } else {
+                // success: response contains (P)ACK or actual data
+                writeToUiAppend(textView, "SUCCESS: response: " + bytesToHex(response));
+                System.out.println("pwdAuth " + bytesToHex(passwordByte) + " response: " + bytesToHex(response));
+                result = true;
+            }
+        } catch (TagLostException e) {
+            // Log and return
+            writeToUiAppend(textView, "ERROR: Tag lost exception OR Tag is not protected");
+            return false;
+        } catch (IOException e) {
+            writeToUiAppend(textView, "IOException: " + e.toString());
+            e.printStackTrace();
+            return false;
+        }
+        return result; // response contains the response
+    }
+
     private void writeToUi(TextView textView, String message) {
         runOnUiThread(() -> {
             textView.setText(message);
         });
+    }
+
+    private void writeToUiAppend(TextView textView, String message) {
+        runOnUiThread(() -> {
+            String newString = textView.getText().toString() + "\n" + message;
+            textView.setText(newString);
+        });
+    }
+
+    public static String removeAllNonAlphaNumeric(String s) {
+        if (s == null) {
+            return null;
+        }
+        return s.replaceAll("[^A-Za-z0-9]", "");
     }
 
     public static String bytesToHex(byte[] bytes) {
@@ -407,4 +471,5 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         if (mNfcAdapter != null)
             mNfcAdapter.disableReaderMode(this);
     }
+
 }
