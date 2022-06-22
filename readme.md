@@ -5,20 +5,30 @@ at the moment as some writing addresses do not match the tag and will fail.
 
 Actual project status:
 
-MainActivity: is writing an 8 character long string to pages 4 and 5 of the tag. If the tag is write 
+MainActivity: is writing an 8 character long string to pages 4 and 5 on the tag. If the tag is write 
 protected on these pages the operation will fail with an IOException.
 
-FastReadActivity: is reading some pages of the tag and display them separately:
+FastReadActivity: is reading some pages of the tag and displays them separately:
 - page 00 serial number
 - page 01 serial number (continued)
 - page 02 serial number (continued), internal, static lock bytes
 - page 03 Capability Container for NDEF messafes
 - page 04 user data, 1st page
 - page 05 user data, 2nd page
-- page E2 (227) Configuration page 1
-- page E3 (228) Configuration page 2
+- page E2 (227) Configuration page 1 (see below)
+- page E3 (228) Configuration page 2 (see below)
 - page E4 (229) password
 - page E5 (230) pack
+
+The "fast read" is the special mode of NTAG21x tags as we can read a lot of more pages in one 
+call that the "old fashioned" "read" command.
+
+FastReadAuthActivity: the basic features are from FastReadActivity plus the authentication 
+on password protected tags. You need to provide the same password as it was set during write 
+protection operation plus the "PACK" value (for more information see SetWriteProtectionActivity).
+
+SetWriteProtectionActivity: 
+
 
 
 
