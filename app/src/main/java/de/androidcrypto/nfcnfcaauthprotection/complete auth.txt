@@ -1,0 +1,294 @@
+https://stackoverflow.com/questions/22719465/ntag212-mifare-ultralight-with-authentication
+
+NTAG212 Mifare Ultralight with Authentication
+Ask Question
+Asked 8 years, 2 months ago
+Modified 11 months ago
+Viewed 5k times
+
+4
+
+
+6
+I am new to NFC Android and I have been stuck for days trying to get the Page 4 to page 7 of NTAG212 Mifare Ultralight with Authentication, I already have the PWD and PACK to do the PWD_AUTH based on the NTAG212 Docs.
+
+I do this approach...
+
+//assume password as array of bytes
+//assume pack as array of bytes
+try{
+nfc.connect();
+byte[] cmd1 = nfc.transceive(new byte[]{ (byte) 0x30, (byte) 0x00 }); //read the page 0     to make the NFC active
+nfc.transceive(new byte[]{
+   (byte) 0x1B, //command for PWD_AUTH
+   pass[0],
+   pass[1],
+   pass[2],
+   pass[3]
+});
+byte[] cmd4 = nfc.transceive(new byte[]{ (byte) 0x30, (byte) 0x04 }); //read the page 4
+}catch(TagLostException e){
+  e.printStackTrace();
+}catch(IOException e){
+  e.printStachTrace();
+}finally{
+    try{
+        nfc.close();
+    }catch(Exception e){
+      //display failed to close
+    }
+}
+I always receive a android.nfc.TagLostException: Tag was lost. Error after sending the PWD_AUTH command to the NFC. Can someone tell me what I am doing wrong? Is my approach correct? Please help.
+
+NOTE: I have read the docs of NTAG212 many times, searched google, stackoverflow and all possible resources.
+
+TIA,
+Kenster
+
+10
+
+The PWD_AUTH command that you send to the tag does not make much sense.
+
+The idea of the PWD_AUTH command is that you send your password (a 4-byte value) and that the tag
+responds with its password acknowledge (PACK) value (a 2-byte value) if you authenticated with the
+correct password. You can then verify the PACK value against the expected password acknowledge to
+"authenticate" the tag.
+
+So the correct command would be:
+
+byte[] response = nfc.transceive(new byte[] {
+    (byte) 0x1B, // PWD_AUTH
+    pass[0], pass[1], pass[2], pass[3]
+});
+if ((response != null) && (response.length >= 2)) {
+   byte[] pack = Arrays.copyOf(response, 2);
+   // TODO: verify PACK to confirm that tag is authentic (not really,
+   // but that whole PWD_AUTH/PACK authentication mechanism was not
+   // really meant to bring much security, I hope; same with the
+   // NTAG signature btw.)
+}
+What you need in order to enable password protection (on NTAG212):
+
+Set PWD (page 39) to your desired password (default value is 0xFFFFFFFF).
+
+byte[] response = nfc.transceive(new byte[] {
+    (byte) 0xA2, // WRITE
+    (byte) 39,   // page address
+    pass[0], pass[1], pass[2], pass[3]
+});
+Set PACK (page 40, bytes 0-1) to your desired password acknowledge (default value is 0x0000).
+
+byte[] response = nfc.transceive(new byte[] {
+    (byte) 0xA2, // WRITE
+    (byte) 40,   // page address
+    pack[0], pack[1],   // bytes 0-1 are PACK value
+    (byte) 0, (byte) 0  // other bytes are RFU and must be written as 0
+});
+Set AUTHLIM (page 38, byte 0, bits 2-0) to the maximum number of failed password verification
+attempts (setting this value to 0 will permit an unlimited number of PWD_AUTH attempts).
+Set PROT (page 38, byte 0, bit 7) to your desired value (0 = PWD_AUTH in needed only for write
+access, 1 = PWD_AUTH is necessary for read and write access).
+
+byte[] response = nfc.transceive(new byte[] {
+    (byte) 0x30, // READ
+    (byte) 38    // page address
+});
+if ((response != null) && (response.length >= 16)) {  // read always returns 4 pages
+    boolean prot = false;  // false = PWD_AUTH for write only, true = PWD_AUTH for read and write
+    int authlim = 0; // value between 0 and 7
+    response = nfc.transceive(new byte[] {
+        (byte) 0xA2, // WRITE
+        (byte) 38,   // page address
+        (byte) ((response[0] & 0x078) | (prot ? 0x080 : 0x000) | (authlim & 0x007)),
+        response[1], response[2], response[3]  // keep old value for bytes 1-3, you could also simply
+        set them to 0 as they are currently RFU and must always be written
+        as 0 (response[1], response[2], response[3] will contain 0 too as they contain the read RFU value)
+    });
+}
+Set AUTH0 (page 37, byte 3) to the first page that should require password authentication.
+
+byte[] response = nfc.transceive(new byte[] {
+    (byte) 0x30, // READ
+    (byte) 37    // page address
+});
+if ((response != null) && (response.length >= 16)) {  // read always returns 4 pages
+    boolean prot = false;  // false = PWD_AUTH for write only, true = PWD_AUTH for read and write
+    int auth0 = 0; // first page to be protected, set to a value between 0 and 37 for NTAG212
+    response = nfc.transceive(new byte[] {
+        (byte) 0xA2, // WRITE
+        (byte) 37,   // page address
+        response[0], // keep old value for byte 0
+        response[1], // keep old value for byte 1
+        response[2], // keep old value for byte 2
+        (byte) (auth0 & 0x0ff)
+    });
+}
+If you use MifareUltralight tag technology, instead of using the transceive method directly, you
+could also use the readPages and writePage methods:
+
+The READ command
+
+byte[] response = nfc.transceive(new byte[] {
+    (byte) 0x30,                  // READ
+    (byte) (pageAddress & 0x0ff)  // page address
+});
+is equvalent to
+
+byte[] response = nfc.readPages(pageAddress);
+The WRITE command
+
+byte[] data = { (byte)..., (byte)..., (byte)..., (byte)... };
+byte[] response = nfc.transceive(new byte[] {
+    (byte) 0xA2,                  // WRITE
+    (byte) (pageAddress & 0x0ff), // page address
+    data[0], data[1], data[2], data[3]
+});
+is equvalent to
+
+nfc.writePage(pageAddress, data);
+Share
+Edit
+Follow
+Flag
+edited Apr 1, 2014 at 6:37
+answered Mar 28, 2014 at 21:07
+user avatar
+Michael Roland
+38.2k1010 gold badges8989 silver badges186186 bronze badges
+
+Hi Michael, I did what you suggest, still getting same error... Is my approach right? I read the
+page 0 to get the NFC to active state then proceed to PWD_AUTH? or I am missing something. Ty for
+response btw.. –
+Kenster
+ Mar 29, 2014 at 5:26
+
+There is no need to read page 0 before the PWD_AUTH command. The NFC link is activated once you
+receive the NFC tag dicovery intent and the tag will be activated as soon as you call the connect()
+method. I assume you are starting the above communication immediately upon receiving the NFC tag
+dicovery intent, right? –
+Michael Roland
+ Mar 29, 2014 at 14:06
+
+Some more questions for debugging: 1. Are you sure that the PWD_AUTH command causes the exception?
+(I.e. that the exception is not already thrown upon the READ(0) command.) 2. Are you sure that the
+password you send to the tag matches the one that is configured in the tag? 3. Password protection
+is enabled (i.e. AUTH0 is set to a value lower or equal to the last page address). 4. If AUTHLIM was
+set to a value other than 0, you might have used up all authentication attempts (and therefore
+permanently blocked tag access) with the previous failed authentication attempts. –
+Michael Roland
+ Mar 29, 2014 at 14:13
+
+1. Yes after I call the transceive with 0x1B 2. Yes the password i sent was correct. 3. This i dont
+know, It said in docs i have to set it in some bytes but I dont know where to set it. 4. If the tag
+is blocked, I cant recover it? That AUTH0 thing, in the docs it said that I need to set it to some
+bytes, also the PROT need to set in some bytes, where can I do that? What page and which bit? It is
+not said in the docs. Maybe you are right I have used all the attempts, Can you give examples of
+these? Thanks, It is getting clearer to me now. –
+Kenster
+ Mar 29, 2014 at 17:39
+
+Can we consider a scan of tag without sending PWD_AUTH an attempt to AUTHENTICATE thus making it
+locked because of too many wrong attempts? Thanks. –
+Kenster
+ Mar 29, 2014 at 20:07
+
+I have updated my answer with regard to the location of password-related configuration settings on
+NTAG212.
+3. Do read attempts for page 3 (or whatever page you have set password authentication
+to start at) fail if you didn't perform authentication?
+4. No, read attempts without prior authentication won't count towards AUTHLIM. However, those failed
+attempts where you sent the PACK bytes together with the PWD bytes in the PWD_AUTH command may
+(very likely) have counted towards failed authentication attempts. –
+Michael Roland
+ Mar 30, 2014 at 17:59
+
+1-2. I am not exactly sure how to write the bit7 and bit2. Also the byte3 of AUTH0(what will i set
+in byte 0-2?). I try to write in page38 with
+nfc.transceive(new byte[]{ (byte)0xA2, 0x38, 0x00, 0x00 });
+but i still have an error with TagLost. can you give example of these?.
+3. Yes it fails reading from page3 and up.
+4. I see. I also not mentioned I dont detect NDEF message whenever I scan the tag in NXP Tagreader
+I get No NFC data set storage in NDEF Tab and the memory size is 32pages with 4 bytes page (but i see
+40 pages in docs). –
+Kenster
+ Mar 31, 2014 at 2:26
+
+I am just using NFCa and MifareUltralight transceive commands. Im really lost to this and confuse. –
+Kenster
+ Mar 31, 2014 at 2:34
+
+Typically, you would first read the page, then modify those bits/bytes that you want to change and
+then write back the whole page (you can only write pages as a whole, so the write command must always
+contain 4 data bytes). If reading from page 3 onwards fails, you very likely did enable password
+protection for read and write. In that case it is no wonder that NFC TagInfo (neither the one from
+NXP nor mine) can read the tag/detect an NDEF message/properly detect the tag size (all of that would
+require free read access to the whole tag). –
+Michael Roland
+ Mar 31, 2014 at 11:01
+
+Btw. you can use NfcA or MifareUltralight tag technologies in Android, the transceive method of both
+tag technologies will do the exact same thing. –
+Michael Roland
+ Mar 31, 2014 at 11:01
+
+So if thats the case what should i do? I send correct pwd but it fails... the tag is set by the
+manufacturer before gaving to us. I have new tags that havent scanned yet. But i dont know how to
+get the data... what seemd.to be the problem in pwd_auth? –
+Kenster
+ Mar 31, 2014 at 14:07
+
+How can i unlocked it? I have the necessary details but dont know what command to send... please can
+u provide one? Really confuse here... thanks –
+Kenster
+ Mar 31, 2014 at 14:09
+
+So the tags come preprogrammed with a certain password and a certain lock state from your supplier?
+In that case you can only trust them to have set up password protection correctly. In order to then
+unlock the password protected tag you would just need to send the PWD_AUTH command. If that fails
+(i.e. you get the tag lost exception or the transceive method returns a NAK value) the tag is either
+permanently locked (because of too many failed PWD_AUTH attempts) or the password you sent is wrong.
+There's not much you can do to further debug the problem in that case. –
+Michael Roland
+ Mar 31, 2014 at 15:00
+
+So to sum it up? If my PWD i sent was right I can read the PAGE4 - Page7 right? If not its either PWD
+i sent is wrong or the PWD set by manufacturer is wrong. –
+Kenster
+Mar 31, 2014 at 15:38
+
+Just one more Michael, Can you give the example code for setting PROT, AUTHLIM, and AUTH0? I just dont
+understand the 7bit, 2bit and the byte3 for AUTH0. This will be my last request. –
+Kenster
+ Mar 31, 2014 at 15:43
+
+Thanks so much for the information you gave. Ill mark this now as SOLVED since you really solved the
+problem for PWD_AUTH question. Thanks alot dude. you rock. –
+Kenster
+ Apr 1, 2014 at 8:37
+
+I have a very strange problem, my PWD_AUTH goes through and it returns the pack correctly, but after
+that my read/writes fail. Strange. Anything else i am missing –
+Sharjeel Ahmed
+ Jun 19, 2016 at 15:32
+
+i figured out that if we debug line by line we can get a Transceive error, hence debugging it not
+recommended when using PWD_AUTH. –
+Sharjeel Ahmed
+ Jun 19, 2016 at 15:55
+Add a comment
+
+0
+
+One gets the TagLostException when sending a wrong password during the PWD_AUTH operation.
+
+Make sure the 4-byte password sent in the PWD_AUTH operation matches what you used to set the tag's
+PWD field with a regular WRITE operation.
+Share
+Edit
+Follow
+Flag
+edited Jul 20, 2021 at 12:21
+answered Jul 20, 2021 at 12:15
+user avatar
+HANiS
+49044 silver badges7

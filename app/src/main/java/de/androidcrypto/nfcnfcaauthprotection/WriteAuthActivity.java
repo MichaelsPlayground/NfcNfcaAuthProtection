@@ -222,7 +222,7 @@ public class WriteAuthActivity extends AppCompatActivity implements NfcAdapter.R
 
                     }
 
-                    // ### section for writing only part of page
+                    // ### section for writing only a part of page
                     if (dataPagesMod == 0) {
                         // don't write a new page
                         nfcaContent = nfcaContent + "write result: SUCCESS" + "\n";
@@ -384,6 +384,7 @@ public class WriteAuthActivity extends AppCompatActivity implements NfcAdapter.R
             }
         } catch (TagLostException e) {
             // Log and return
+            System.out.println("ERROR: Tag lost exception OR Tag is not protected");
             writeToUiAppend(textView, "ERROR: Tag lost exception OR Tag is not protected");
             return false;
         } catch (IOException e) {

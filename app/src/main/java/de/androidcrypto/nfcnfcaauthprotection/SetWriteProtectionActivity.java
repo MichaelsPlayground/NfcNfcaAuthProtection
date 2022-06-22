@@ -108,13 +108,19 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
                 byte[] response = new byte[0];
 
                 try {
+
+                    // default values in form
+                    // password: 1234 = x31 x32 x33 x34
+                    // pack: oK = x6f x4B
+                    // protectionStartingPage = 4
+
                     // get data from passwordField
                     String passwordString = passwordField.getText().toString();
                     // limitation: exact 4 alphanumerical characters
                     passwordString = removeAllNonAlphaNumeric(passwordString);
                     if (passwordString.length() != 4) {
                         nfcaContent = nfcaContent + "Error: you need to enter exact 4 alphanumerical characters for PASSWORD" + "\n";
-                        writeToUi(nfcResult, nfcaContent);
+                        writeToUiAppend(nfcResult, nfcaContent);
                         return;
                     }
                     byte[] passwordByte = passwordString.getBytes(StandardCharsets.UTF_8);
@@ -127,7 +133,7 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
                     packString = removeAllNonAlphaNumeric(packString);
                     if (packString.length() != 2) {
                         nfcaContent = nfcaContent + "Error: you need to enter exact 2 alphanumerical characters for PACK" + "\n";
-                        writeToUi(nfcResult, nfcaContent);
+                        writeToUiAppend(nfcResult, nfcaContent);
                         return;
                     }
                     byte[] packByte = packString.getBytes(StandardCharsets.UTF_8);
@@ -147,14 +153,17 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
                         return;
                     }
                     nfcaContent = nfcaContent + "Protection starting page: " + startProtectionPage + "\n";
+                    writeToUi2(nfcResult, nfcaContent);
 
                     // write password to page 43/133/229 (NTAG 213/215/216)  ### WRONG ### page 4 for testing purposes
                     boolean responseSuccessful;
-                    responseSuccessful = writeTagData(nfcA, 04, passwordByte, nfcResult, response);
+                    //responseSuccessful = writeTagData(nfcA, 04, passwordByte, nfcResult, response);
+                    responseSuccessful = writeTagData(nfcA, 229, passwordByte, nfcResult, response);
                     if (!responseSuccessful) return;
 
                     // write pack to page 44/134/230 (NTAG 213/215/216) ### WRONG ### page 5 for testing purposes
-                    responseSuccessful = writeTagData(nfcA, 05, packBytePage, nfcResult, response);
+                    //responseSuccessful = writeTagData(nfcA, 05, packBytePage, nfcResult, response);
+                    responseSuccessful = writeTagData(nfcA, 230, packBytePage, nfcResult, response);
                     if (!responseSuccessful) return;
 
                     // write auth0 to page 41/131/227 (NTAG 213/215/216)### WRONG ### page 5 for testing purposes
@@ -169,7 +178,7 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
                     configurationPage1[3] = (byte) (startProtectionPage & 0x0ff);
                     writeToUiAppend(nfcResult, "configuration page new: " + bytesToHex(configurationPage1));
                     // write the page back to tag
-                    responseSuccessful = writeTagData(nfcA, 05, configurationPage1, nfcResult, response);
+                    responseSuccessful = writeTagData(nfcA, 227, configurationPage1, nfcResult, response);
                     if (!responseSuccessful) return;
 
                 } finally {
@@ -192,7 +201,7 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
     }
 
 
-    private void writeToUi(TextView textView, String message) {
+    private void writeToUi2(TextView textView, String message) {
         runOnUiThread(() -> {
             textView.setText(message);
         });

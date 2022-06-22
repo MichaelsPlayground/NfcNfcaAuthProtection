@@ -300,14 +300,18 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     });
                     return;
                 } catch(IOException e){
-
+                    nfcaContent = nfcaContent + "IOException: " + e.toString();
+                    String finalNfcaText = nfcaContent;
+                    runOnUiThread(() -> {
+                        nfcResult.setText(finalNfcaText);
+                        System.out.println(finalNfcaText);
+                    });
                     e.printStackTrace();
-
+                    return;
                 }
                 nfcaContent = nfcaContent + "write result: SUCCESS" + "\n";
                 String finalNfcaRawText = nfcaContent;
                 String finalNfcaText = "parsed content:\n" + new String(ntagMemory, StandardCharsets.US_ASCII);
-
                 runOnUiThread(() -> {
                     nfcResult.setText(finalNfcaRawText);
                     nfcResult.setText(finalNfcaText);
@@ -320,25 +324,38 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                             Toast.LENGTH_SHORT).show();
                 });
             }
-        } catch(
-                IOException e)
-
-        {
+        } catch(IOException e) {
             //Trying to catch any ioexception that may be thrown
             e.printStackTrace();
-        } catch(
-                Exception e)
-
-        {
+            String finalNfcaRawText = "ERROR: IOException";
+            String finalNfcaText = "ERROR: IOException";
+            runOnUiThread(() -> {
+                nfcResult.setText(finalNfcaRawText);
+                nfcResult.setText(finalNfcaText);
+                System.out.println(finalNfcaRawText);
+            });
+        } catch (Exception e) {
+            String finalNfcaRawText = "ERROR: Exception";
+            String finalNfcaText = "ERROR: Exception";
+            runOnUiThread(() -> {
+                nfcResult.setText(finalNfcaRawText);
+                nfcResult.setText(finalNfcaText);
+                System.out.println(finalNfcaRawText);
+            });
             //Trying to catch any exception that may be thrown
             e.printStackTrace();
 
-        } finally
-
-        {
+        } finally {
             try {
                 nfcA.close();
             } catch (IOException e) {
+                String finalNfcaRawText = "ERROR: IOException";
+                String finalNfcaText = "ERROR: IOException";
+                runOnUiThread(() -> {
+                    nfcResult.setText(finalNfcaRawText);
+                    nfcResult.setText(finalNfcaText);
+                    System.out.println(finalNfcaRawText);
+                });
             }
         }
 
