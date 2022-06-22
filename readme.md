@@ -30,6 +30,8 @@ protection operation plus the "PACK" value (for more information see SetWritePro
 SetWriteProtectionActivity: 
 
 
+RemoveWriteProtectionActivity:
+
 
 
 The Configuration page 1 does have the following fields:
