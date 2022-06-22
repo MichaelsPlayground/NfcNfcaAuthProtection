@@ -145,6 +145,8 @@ public class WriteAuthActivity extends AppCompatActivity implements NfcAdapter.R
                     System.out.println("*** start authentication");
                     responseSuccessful = sendPwdAuthData(nfcA, passwordByte, nfcResult, response);
                     if (!responseSuccessful) return;
+                    // todo check response for PACK to proceed
+
 
                     // get data from InputField
                     String dataString = inputField.getText().toString();

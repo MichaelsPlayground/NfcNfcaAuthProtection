@@ -26,7 +26,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:text="WARNING: When a tag is discovered the password is set to (default) FF FF FF FF and the PACK is FF FF and written on the tag without further notice.\nDO NOT USE THIS WITH NTAGs NEEDED IN REAL APPLICATIONS OR NDEF."
+            android:text="WARNING: When a tag is discovered the password is set to (default) FF FF FF FF, the PACK is FF FF and the Start Protection is set to FF. These defaults are written on the tag without further notice.\nDO NOT USE THIS WITH NTAGs NEEDED IN REAL APPLICATIONS OR NDEF."
             android:textAlignment="center"
             android:textSize="16sp"
             android:textStyle="bold" />
@@ -45,7 +45,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="8dp"
-            android:hint="Password is exact 4 alphanumeric characters"
+            android:hint="old Password is exact 4 alphanumeric characters"
             app:boxCornerRadiusBottomEnd="5dp"
             app:boxCornerRadiusBottomStart="5dp"
             app:boxCornerRadiusTopEnd="5dp"
@@ -72,7 +72,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="8dp"
-            android:hint="Pack is exact 2 alphanumeric characters"
+            android:hint="old Pack is exact 2 alphanumeric characters"
             app:boxCornerRadiusBottomEnd="5dp"
             app:boxCornerRadiusBottomStart="5dp"
             app:boxCornerRadiusTopEnd="5dp"
@@ -99,7 +99,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="8dp"
-            android:hint="Pages beginning with below number are protected"
+            android:hint="Pages beginning with below number are protected, fixed to 255"
             app:boxCornerRadiusBottomEnd="5dp"
             app:boxCornerRadiusBottomStart="5dp"
             app:boxCornerRadiusTopEnd="5dp"
@@ -113,10 +113,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
-                android:focusable="true"
+                android:focusable="false"
                 android:inputType="number"
                 android:maxLines="1"
-                android:text="4"
+                android:text="255"
                 tools:ignore="KeyboardInaccessibleWidget" />
         </com.google.android.material.textfield.TextInputLayout>
 

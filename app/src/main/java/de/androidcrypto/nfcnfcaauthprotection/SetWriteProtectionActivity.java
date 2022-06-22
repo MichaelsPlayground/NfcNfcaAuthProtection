@@ -39,7 +39,7 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
         passwordField = findViewById(R.id.etWriteProtectionPassword);
         passwordDecoration = findViewById(R.id.etWriteProtectionPasswordDecoration);
         packField = findViewById(R.id.etWriteProtectionPack);
-        packDecoration = findViewById(R.id.etWriteProtectionPasswordDecoration);
+        packDecoration = findViewById(R.id.etWriteProtectionPackDecoration);
         startProtection = findViewById(R.id.etWriteProtectionStartProtection);
         startProtectionDecoration = findViewById(R.id.etWriteProtectionStartProtectionDecoration);
         nfcResult = findViewById(R.id.tvWriteProtectionNfcaResult);
