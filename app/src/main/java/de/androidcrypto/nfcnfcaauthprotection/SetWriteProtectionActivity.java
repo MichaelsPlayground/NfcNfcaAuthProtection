@@ -13,7 +13,9 @@ import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
+import android.renderscript.Sampler;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,8 +24,8 @@ import java.nio.charset.StandardCharsets;
 
 public class SetWriteProtectionActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
 
-    com.google.android.material.textfield.TextInputLayout passwordDecoration;
-    com.google.android.material.textfield.TextInputEditText passwordField;
+    com.google.android.material.textfield.TextInputLayout passwordDecoration, packDecoration, startProtectionDecoration;
+    com.google.android.material.textfield.TextInputEditText passwordField, packField, startProtection;
 
     TextView nfcResult;
     Button fastRead, sample2, setWriteProtection, removeWriteProtection;
@@ -36,6 +38,10 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
 
         passwordField = findViewById(R.id.etWriteProtectionPassword);
         passwordDecoration = findViewById(R.id.etWriteProtectionPasswordDecoration);
+        packField = findViewById(R.id.etWriteProtectionPack);
+        packDecoration = findViewById(R.id.etWriteProtectionPasswordDecoration);
+        startProtection = findViewById(R.id.etWriteProtectionStartProtection);
+        startProtectionDecoration = findViewById(R.id.etWriteProtectionStartProtectionDecoration);
         nfcResult = findViewById(R.id.tvWriteProtectionNfcaResult);
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
@@ -99,219 +105,92 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
                 // read the complete memory depending on ntag type
                 byte[] ntagMemory = new byte[ntagMemoryBytes];
                 // read the content of the tag in several runs
-                byte[] response;
+                byte[] response = new byte[0];
+
                 try {
                     // get data from passwordField
-                    String dataString = passwordField.getText().toString();
-
+                    String passwordString = passwordField.getText().toString();
                     // limitation: exact 4 alphanumerical characters
-                    dataString = removeAllNonAlphaNumeric(dataString);
-                    if (dataString.length() != 4 ) {
-                        nfcaContent = nfcaContent + "Error: you need to enter exact 4 alphanumerical characters" + "\n";
+                    passwordString = removeAllNonAlphaNumeric(passwordString);
+                    if (passwordString.length() != 4) {
+                        nfcaContent = nfcaContent + "Error: you need to enter exact 4 alphanumerical characters for PASSWORD" + "\n";
                         writeToUi(nfcResult, nfcaContent);
                         return;
                     }
-                    byte[] dataByte = dataString.getBytes(StandardCharsets.UTF_8);
-                    nfcaContent = nfcaContent + "Password: " + dataString + " hex: " + bytesToHex(dataByte) + "\n";
+                    byte[] passwordByte = passwordString.getBytes(StandardCharsets.UTF_8);
+                    int passwordLength = passwordByte.length;
+                    nfcaContent = nfcaContent + "Password: " + passwordString + " hex: " + bytesToHex(passwordByte) + "\n";
 
-
-
-
-                    int dataLength = dataByte.length;
-                    // as the Tag is saving in blocks of 4 bytes we need to know how many pages we do need
-                    int dataPages = dataLength / 4;
-                    int dataPagesMod = dataLength % 4; // if there is a remainder we need to use a new page to write
-                    nfcaContent = nfcaContent + "data length: " + dataLength + "\n";
-                    nfcaContent = nfcaContent + "data: " + bytesToHex(dataByte) + "\n";
-                    nfcaContent = nfcaContent + "dataPages: " + dataPages + "\n";
-                    nfcaContent = nfcaContent + "dataPagesMod: " + dataPagesMod + "\n";
-
-                    // check that the data is fitting on the tag
-                    if (dataLength > ntagMemoryBytes) {
-                        runOnUiThread(() -> {
-                            nfcResult.setText("data in InputField is too long for tag");
-                            System.out.println("data in InputField is too long for tag");
-                            Toast.makeText(getApplicationContext(),
-                                    "data in InputField is too long for tag",
-                                    Toast.LENGTH_SHORT).show();
-                        });
-                        return;
-                    }
-                    nfcaContent = nfcaContent + "writing full pages" + "\n";
-                    // writing full pages of 4 bytes each
-                    for (int i = 0; i < dataPages; i++) {
-                        System.out.println("starting round: " + i);
-                        byte[] commandW;
-                        commandW = new byte[]{
-                                (byte) 0xA2,  // WRITE
-                                (byte) ((4 + i) & 0x0ff), // page 4 is the first user memory page
-                                dataByte[0 + (i * 4)],
-                                dataByte[1 + (i * 4)],
-                                dataByte[2 + (i * 4)],
-                                dataByte[3 + (i * 4)]
-                        };
-                        nfcaContent = nfcaContent + "command: " + bytesToHex(commandW) + "\n";
-                        response = nfcA.transceive(commandW);
-                        if (response == null) {
-                            // either communication to the tag was lost or a NACK was received
-                            // Log and return
-                            nfcaContent = nfcaContent + "ERROR: null response";
-                            String finalNfcaText = nfcaContent;
-                            runOnUiThread(() -> {
-                                nfcResult.setText(finalNfcaText);
-                                System.out.println(finalNfcaText);
-                            });
-                            return;
-                        } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
-                            // NACK response according to Digital Protocol/T2TOP
-                            // Log and return
-                            nfcaContent = nfcaContent + "ERROR: NACK response: " + bytesToHex(response);
-                            String finalNfcaText = nfcaContent;
-                            runOnUiThread(() -> {
-                                nfcResult.setText(finalNfcaText);
-                                System.out.println(finalNfcaText);
-                            });
-                            return;
-                        } else {
-                            // success: response contains ACK or actual data
-                            // nfcaContent = nfcaContent + "successful reading " + response.length + " bytes\n";
-                            // nfcaContent = nfcaContent + bytesToHex(response) + "\n";
-                            // copy the response to the ntagMemory
-                            //nfcaContent = nfcaContent + "number of bytes read: : " + response.length + "\n";
-                            nfcaContent = nfcaContent + "response:\n" + bytesToHex(response) + "\n";
-                            //System.arraycopy(response, 0, ntagMemory, (nfcaMaxTranceive4ByteLength * i), nfcaMaxTranceive4ByteLength);
-                        }
-
-                    }
-
-                    // ### section for writing only part of page
-                    if (dataPagesMod == 0) {
-                        // don't write a new page
-                        nfcaContent = nfcaContent + "write result: SUCCESS" + "\n";
+                    // get pack from etWriteProtectionPack
+                    String packString = packField.getText().toString();
+                    // limitation: exact 2 alphanumerical characters
+                    packString = removeAllNonAlphaNumeric(packString);
+                    if (packString.length() != 2) {
+                        nfcaContent = nfcaContent + "Error: you need to enter exact 2 alphanumerical characters for PACK" + "\n";
                         writeToUi(nfcResult, nfcaContent);
-                        try {
-                            nfcA.close();
-                        } catch (IOException e) {
-                        }
                         return;
                     }
-                    byte[] commandW = new byte[0];
-                    if (dataPagesMod == 1) {
-                        commandW = new byte[]{
-                                (byte) 0xA2,  // WRITE
-                                (byte) ((4 + dataPages) & 0x0ff), // page 4 is the first user memory page
-                                dataByte[0 + (dataPages * 4)],
-                                (byte) 0x00,
-                                (byte) 0x00,
-                                (byte) 0x00
-                        };
-                    }
-                    if (dataPagesMod == 2) {
-                        commandW = new byte[]{
-                                (byte) 0xA2,  // WRITE
-                                (byte) ((4 + dataPages) & 0x0ff), // page 4 is the first user memory page
-                                dataByte[0 + (dataPages * 4)],
-                                dataByte[1 + (dataPages * 4)],
-                                (byte) 0x00,
-                                (byte) 0x00
-                        };
-                    }
-                    if (dataPagesMod == 3) {
-                        commandW = new byte[]{
-                                (byte) 0xA2,  // WRITE
-                                (byte) ((4 + dataPages) & 0x0ff), // page 4 is the first user memory page
-                                dataByte[0 + (dataPages * 4)],
-                                dataByte[1 + (dataPages * 4)],
-                                dataByte[2 + (dataPages * 4)],
-                                (byte) 0x00
-                        };
-                    }
+                    byte[] packByte = packString.getBytes(StandardCharsets.UTF_8);
+                    int packLength = packByte.length;
+                    nfcaContent = nfcaContent + "Pack: " + packString + " hex: " + bytesToHex(packByte) + "\n";
+                    // as we write a complete page we need to fill up the bytes 3 + 4 with 0x00
+                    byte[] packBytePage = new byte[4];
+                    System.arraycopy(packByte, 0, packBytePage, 0, 2);
 
-                    nfcaContent = nfcaContent + "command: " + bytesToHex(commandW) + "\n";
-                    response = nfcA.transceive(commandW);
-                    if (response == null) {
-                        // either communication to the tag was lost or a NACK was received
-                        // Log and return
-                        nfcaContent = nfcaContent + "ERROR: null response";
-                        String finalNfcaText = nfcaContent;
-                        runOnUiThread(() -> {
-                            nfcResult.setText(finalNfcaText);
-                            System.out.println(finalNfcaText);
-                        });
+                    // get starting page for write/read protection from etWriteProtectionStartProtection
+                    String startProtectionString = startProtection.getText().toString();
+                    // limitation: only numbers through field type, maximum depends on NTAG type
+                    int startProtectionPage = Integer.valueOf(startProtectionString);
+                    if (startProtectionPage > 230) {
+                        nfcaContent = nfcaContent + "Error: the page has to be in range 00 - 230" + "\n";
+                        writeToUiAppend(nfcResult, nfcaContent);
                         return;
-                    } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
-                        // NACK response according to Digital Protocol/T2TOP
-                        // Log and return
-                        nfcaContent = nfcaContent + "ERROR: NACK response: " + bytesToHex(response);
-                        String finalNfcaText = nfcaContent;
-                        runOnUiThread(() -> {
-                            nfcResult.setText(finalNfcaText);
-                            System.out.println(finalNfcaText);
-                        });
-                        return;
-                    } else {
-                        // success: response contains ACK or actual data
-                        // nfcaContent = nfcaContent + "successful reading " + response.length + " bytes\n";
-                        // nfcaContent = nfcaContent + bytesToHex(response) + "\n";
-                        // copy the response to the ntagMemory
-                        //nfcaContent = nfcaContent + "number of bytes read: : " + response.length + "\n";
-                        nfcaContent = nfcaContent + "response:\n" + bytesToHex(response) + "\n";
-                        //System.arraycopy(response, 0, ntagMemory, (nfcaMaxTranceive4ByteLength * i), nfcaMaxTranceive4ByteLength);
                     }
+                    nfcaContent = nfcaContent + "Protection starting page: " + startProtectionPage + "\n";
 
-                } catch(TagLostException e){
-                    // Log and return
-                    nfcaContent = nfcaContent + "ERROR: Tag lost exception";
-                    String finalNfcaText = nfcaContent;
-                    runOnUiThread(() -> {
-                        nfcResult.setText(finalNfcaText);
-                        System.out.println(finalNfcaText);
-                    });
-                    return;
-                } catch(IOException e){
+                    // write password to page 43/133/229 (NTAG 213/215/216)  ### WRONG ### page 4 for testing purposes
+                    boolean responseSuccessful;
+                    responseSuccessful = writeTagData(nfcA, 04, passwordByte, nfcResult, response);
+                    if (!responseSuccessful) return;
 
-                    e.printStackTrace();
+                    // write pack to page 44/134/230 (NTAG 213/215/216) ### WRONG ### page 5 for testing purposes
+                    responseSuccessful = writeTagData(nfcA, 05, packBytePage, nfcResult, response);
+                    if (!responseSuccessful) return;
 
+                    // write auth0 to page 41/131/227 (NTAG 213/215/216)### WRONG ### page 5 for testing purposes
+                    // before writing the complete page we need to read the data from byte 0..2
+                    byte[] configurationPages = new byte[16];
+                    responseSuccessful = getTagData(nfcA, 227, nfcResult, configurationPages);
+                    if (!responseSuccessful) return;
+                    byte[] configurationPage1 = new byte[4];
+                    System.arraycopy(configurationPages, 0, configurationPage1, 0, 4);
+                    writeToUiAppend(nfcResult, "configuration page old: " + bytesToHex(configurationPage1));
+                    // change byte 03 for AUTH0 data
+                    configurationPage1[3] = (byte) (startProtectionPage & 0x0ff);
+                    writeToUiAppend(nfcResult, "configuration page new: " + bytesToHex(configurationPage1));
+                    // write the page back to tag
+                    responseSuccessful = writeTagData(nfcA, 05, configurationPage1, nfcResult, response);
+                    if (!responseSuccessful) return;
+
+                } finally {
+                    try {
+                        nfcA.close();
+                    } catch (IOException e) {
+                        writeToUiAppend(nfcResult, "ERROR: IOException " + e.toString());
+                        e.printStackTrace();
+                    }
                 }
-                nfcaContent = nfcaContent + "write result: SUCCESS" + "\n";
-                String finalNfcaRawText = nfcaContent;
-                String finalNfcaText = "parsed content:\n" + new String(ntagMemory, StandardCharsets.US_ASCII);
-
-                runOnUiThread(() -> {
-                    nfcResult.setText(finalNfcaRawText);
-                    nfcResult.setText(finalNfcaText);
-                    System.out.println(finalNfcaRawText);
-                });
-            } else{
-                runOnUiThread(() -> {
-                    Toast.makeText(getApplicationContext(),
-                            "NFC tag is NOT Nfca compatible",
-                            Toast.LENGTH_SHORT).show();
-                });
             }
-        } catch(
-                IOException e)
-
-        {
-            //Trying to catch any ioexception that may be thrown
-            e.printStackTrace();
-        } catch(
-                Exception e)
-
-        {
-            //Trying to catch any exception that may be thrown
-            e.printStackTrace();
-
-        } finally
-
-        {
-            try {
-                nfcA.close();
-            } catch (IOException e) {
-            }
+        } catch (TagLostException e) {
+            // Log and return
+            writeToUiAppend(nfcResult, "ERROR: Tag lost exception");
         }
-
+        catch (IOException e) {
+            writeToUiAppend(nfcResult, "ERROR: IOException " + e.toString());
+            e.printStackTrace();
+        }
     }
+
 
     private void writeToUi(TextView textView, String message) {
         runOnUiThread(() -> {
@@ -319,9 +198,94 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
         });
     }
 
+    private void writeToUiAppend(TextView textView, String message) {
+        runOnUiThread(() -> {
+            String newString = textView.getText().toString() + "\n" + message;
+            textView.setText(newString);
+        });
+    }
+
+    private boolean writeTagData(NfcA nfcA, int page, byte[] dataByte, TextView textView,
+                                 byte[] response) {
+        boolean result;
+        //byte[] response;
+        byte[] command = new byte[]{
+                (byte) 0xA2,  // WRITE
+                (byte) (page & 0x0ff), // page
+                dataByte[0],
+                dataByte[1],
+                dataByte[2],
+                dataByte[3]
+        };
+        try {
+            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
+            if (response == null) {
+                // either communication to the tag was lost or a NACK was received
+                writeToUiAppend(textView, "ERROR: null response");
+                return false;
+            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
+                // NACK response according to Digital Protocol/T2TOP
+                // Log and return
+                writeToUiAppend(textView, "ERROR: NACK response: " + bytesToHex(response));
+                return false;
+            } else {
+                // success: response contains (P)ACK or actual data
+                writeToUiAppend(textView, "SUCCESS: response: " + bytesToHex(response));
+                System.out.println("write to page " + page + ": " + bytesToHex(response));
+                result = true;
+            }
+        } catch (TagLostException e) {
+            // Log and return
+            writeToUiAppend(textView, "ERROR: Tag lost exception");
+            return false;
+        } catch (IOException e) {
+            writeToUiAppend(textView, "IOException: " + e.toString());
+            e.printStackTrace();
+            return false;
+        }
+        return result; // response contains the response
+    }
+
+    private boolean getTagData(NfcA nfcA, int page, TextView textView, byte[] response) {
+        boolean result;
+        //byte[] response;
+        byte[] command = new byte[]{
+                (byte) 0x30,  // READ
+                (byte) (page & 0x0ff),
+        };
+        try {
+            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
+            if (response == null) {
+                // either communication to the tag was lost or a NACK was received
+                writeToUiAppend(textView, "ERROR: null response");
+                return false;
+            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
+                // NACK response according to Digital Protocol/T2TOP
+                // Log and return
+                writeToUiAppend(textView, "ERROR: NACK response: " + bytesToHex(response));
+                return false;
+            } else {
+                // success: response contains ACK or actual data
+                writeToUiAppend(textView, "SUCCESS: response: " + bytesToHex(response));
+                System.out.println("read from page " + page + ": " + bytesToHex(response));
+                result = true;
+            }
+        } catch (TagLostException e) {
+            // Log and return
+            writeToUiAppend(textView, "ERROR: Tag lost exception");
+            return false;
+        } catch (IOException e) {
+            writeToUiAppend(textView, "IOException: " + e.toString());
+            e.printStackTrace();
+            return false;
+        }
+        return result;
+    }
+
     public static String bytesToHex(byte[] bytes) {
         StringBuffer result = new StringBuffer();
-        for (byte b : bytes) result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
+        for (byte b : bytes)
+            result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
         return result.toString();
     }
 
