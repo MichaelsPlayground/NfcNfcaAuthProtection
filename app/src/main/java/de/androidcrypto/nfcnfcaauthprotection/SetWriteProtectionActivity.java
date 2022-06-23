@@ -32,7 +32,7 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
     TextView nfcResult;
     Button fastRead, sample2, setWriteProtection, removeWriteProtection;
     private NfcAdapter mNfcAdapter;
-    boolean readProtectionForReadingEnabled = false;
+    boolean readProtectionEnabled = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -161,7 +161,7 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
                     writeToUi2(nfcResult, nfcaContent);
 
                     // enable password protection for reading as well
-                    readProtectionForReadingEnabled = enableReadProtectionSwitch.isEnabled();
+                    readProtectionEnabled = enableReadProtectionSwitch.isEnabled();
 
                     // write password to page 43/133/229 (NTAG 213/215/216)  ### WRONG ### page 4 for testing purposes
                     boolean responseSuccessful;
@@ -176,27 +176,62 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
 
                     // write auth0 to page 41/131/227 (NTAG 213/215/216)### WRONG ### page 5 for testing purposes
                     // before writing the complete page we need to read the data from byte 0..2
-                    byte[] configurationPages0 = new byte[16];
-                    responseSuccessful = getTagData(nfcA, 227, nfcResult, configurationPages0);
+                    byte[] configurationPages = new byte[16];
+                    responseSuccessful = getTagData(nfcA, 227, nfcResult, configurationPages);
                     if (!responseSuccessful) return;
-                    byte[] configurationPage1 = new byte[4];
-                    System.arraycopy(configurationPages0, 0, configurationPage1, 0, 4);
-                    writeToUiAppend(nfcResult, "configuration page old: " + bytesToHex(configurationPage1));
+                    byte[] configurationPage0 = new byte[4];
+                    System.arraycopy(configurationPages, 0, configurationPage0, 0, 4);
+                    writeToUiAppend(nfcResult, "configuration page old: " + bytesToHex(configurationPage0));
                     // change byte 03 for AUTH0 data
-                    configurationPage1[3] = (byte) (startProtectionPage & 0x0ff);
-                    writeToUiAppend(nfcResult, "configuration page new: " + bytesToHex(configurationPage1));
+                    configurationPage0[3] = (byte) (startProtectionPage & 0x0ff);
+                    writeToUiAppend(nfcResult, "configuration page 0 new: " + bytesToHex(configurationPage0));
                     // write the page back to tag
-                    responseSuccessful = writeTagData(nfcA, 227, configurationPage1, nfcResult, response);
+                    responseSuccessful = writeTagData(nfcA, 227, configurationPage0, nfcResult, response);
                     if (!responseSuccessful) return;
 
                     // write BIT for enabling read protection to page 42/132/228 (NTAG 213/215/216) ### WRONG ### page 5 for testing purposes
-                    // before writing the complete page we need to read the data from byte 0..2
-                    byte[] configurationPages1 = new byte[16];
-                    responseSuccessful = getTagData(nfcA, 228, nfcResult, configurationPages1);
-                    if (!responseSuccessful) return;
+                    // before writing the complete page we need to read the data from byte 0..2 = already done for auth0
                     // get value of byte 0 = access
-                    byte[] access = new byte[4];
-                    ###
+                    byte[] configurationPage1 = new byte[4];
+                    System.arraycopy(configurationPages, 4, configurationPage1, 0, 4);
+                    byte accessByte = configurationPage1[0];
+                    // https://www.mytecbits.com/tools/encoders/binary-encoder
+                    // value 0x40 = 64d = 01000000
+                    /*
+                    data structure in this byte
+                    7 = PROT / Password protection, 0 = only write protection,
+                                                    1 = read and write protection
+                    6 = CFGLCK / Configuration pages lock, 0 = user configuration open to write access,
+                                                           1 = user configuration permanently locked
+                    5 = RFUI fixed 0
+                    4 = NFC_CNT_EN = NFC counter configuration, 0 = NFC counter disabled
+                                                                1 = NFC counter enabled
+                    3 = NFC_CNT_PWD_PROT = NFC counter protection, 0 = NFC counter not protected
+                                                                   1 = NFC counter protected:
+                        If the NFC counter password protection is enabled, the NFC tag will only respond
+                        to a READ_CNT command with the NFC counter value after a valid password verification
+                    2 = AUTHLIM / Limitation of negative password verification attempts
+                            000b = limiting of negative password verification attempts disabled
+                            001b-111b ... maximum number of negative password verification attempts
+                    1 = AUTHLIM (continued)
+                    0 = AUTHLIM (continued)
+                    */
+                    // setting bit 7 depends on readProtectionEnabled
+                    if (readProtectionEnabled) {
+                        // set bit 7 to 1, pos is 0 based
+                        accessByte = setBitInByte(accessByte, 7);
+                    } else {
+                        // set bit 7 to 0, pos is 0 based
+                        accessByte = unsetBitInByte(accessByte, 7);
+                    }
+                    // rebuild the page data
+                    configurationPage1[0] = accessByte;
+                    // save the data
+                    writeToUiAppend(nfcResult, "configuration page 1 new: " + bytesToHex(configurationPage1));
+                    // write the page back to tag
+                    responseSuccessful = writeTagData(nfcA, 228, configurationPage1, nfcResult, response);
+                    if (!responseSuccessful) return;
+
 
                 } finally {
                     try {
@@ -215,6 +250,16 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
             writeToUiAppend(nfcResult, "ERROR: IOException " + e.toString());
             e.printStackTrace();
         }
+    }
+
+    // position is 0 based starting from right to left
+    private byte setBitInByte(byte input, int pos) {
+        return (byte) (input | (1 << pos));
+    }
+
+    // position is 0 based starting from right to left
+    private byte unsetBitInByte(byte input, int pos) {
+        return (byte) (input & ~(1 << pos));
     }
 
 
