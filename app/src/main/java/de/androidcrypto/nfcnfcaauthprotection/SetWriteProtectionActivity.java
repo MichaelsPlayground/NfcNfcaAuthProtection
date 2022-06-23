@@ -195,6 +195,9 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
                     byte[] configurationPage1 = new byte[4];
                     System.arraycopy(configurationPages, 4, configurationPage1, 0, 4);
                     byte accessByte = configurationPage1[0];
+                    byte[] abOld = new byte[1];
+                    abOld[0] = accessByte;
+                    writeToUiAppend(nfcResult, "Configuration page 1 old: " + bytesToHex(configurationPage1) + " ACCESS byte: " + printByteArrayBinary(abOld));
                     // https://www.mytecbits.com/tools/encoders/binary-encoder
                     // value 0x40 = 64d = 01000000
                     /*
@@ -226,12 +229,20 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
                     }
                     // rebuild the page data
                     configurationPage1[0] = accessByte;
+                    byte[] ab = new byte[1];
+                    ab[0] = accessByte;
+                    writeToUiAppend(nfcResult, "Configuration page 1 new: " + bytesToHex(configurationPage1) + " ACCESS byte: " + printByteArrayBinary(ab));
                     // save the data
                     writeToUiAppend(nfcResult, "configuration page 1 new: " + bytesToHex(configurationPage1));
                     // write the page back to tag
                     responseSuccessful = writeTagData(nfcA, 228, configurationPage1, nfcResult, response);
                     if (!responseSuccessful) return;
-
+                    writeToUiAppend(nfcResult, "NFC tag is password protected now");
+                    runOnUiThread(() -> {
+                        Toast.makeText(getApplicationContext(),
+                                "NFC tag is password protected now",
+                                Toast.LENGTH_SHORT).show();
+                    });
 
                 } finally {
                     try {
@@ -376,6 +387,18 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
             factor *= 256l;
         }
         return result + "";
+    }
+
+    private static String printByteArrayBinary(byte[] bytes){
+        String output = "";
+        for (byte b1 : bytes){
+            String s1 = String.format("%8s", Integer.toBinaryString(b1 & 0xFF)).replace(' ', '0');
+            //s1 += " " + Integer.toHexString(b1);
+            //s1 += " " + b1;
+            output = output + " " + s1;
+            //System.out.println(s1);
+        }
+        return output;
     }
 
     private void showWirelessSettings() {

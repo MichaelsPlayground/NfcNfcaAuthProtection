@@ -28,7 +28,8 @@ import java.util.BitSet;
 public class NtagDataReadingActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
 
     EditText page00, page01, page02, page03, page04, page05, pageE2, pageE3, pageE4, pageE5, pageE6;
-    EditText pageE4Byte0;
+    EditText pageE4Byte0, counterField, signatureField;
+
     EditText readResult;
     private NfcAdapter mNfcAdapter;
 
@@ -48,6 +49,8 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
         pageE4Byte0 = findViewById(R.id.etNtagReadE4Byte0);
         pageE5 = findViewById(R.id.etNtagReadE5);
         pageE6 = findViewById(R.id.etNtagReadE6);
+        counterField = findViewById(R.id.etNtagReadCnt);
+        signatureField = findViewById(R.id.etNtagReadSignature);
         readResult = findViewById(R.id.etNtagReadResult);
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
@@ -122,13 +125,13 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
                     if (!responseSuccessful) return;
                     byte[] responsePage226 = getTagDataResponse(nfcA, 226);
                     byte[] responsePage228Byte0 = new byte[1];
-                    System.arraycopy(responsePage226, 10, responsePage228Byte0, 0, 1);
+                    System.arraycopy(responsePage226, 8, responsePage228Byte0, 0, 1);
                     // analyse the bits in pageE4 Byte 0
                     //byte pageE4Byte0Byte = hexStringToByteArray(pageE4.getText().toString())[3];
 
                     //String s1;
                     //s1 = printByteArray(hexStringToByteArray(pageE4.getText().toString()));
-                    String s1 = printByteArray(responsePage228Byte0);
+                    String s1 = printByteArrayBinary(responsePage228Byte0);
                     //byte pageE4Byte0Byte = (byte) 129;
                     //String s1 = String.format("%8s", Integer.toBinaryString(pageE4Byte0Byte & 0xFF)).replace(' ', '0');
                     //System.out.println(s1); // 10000001
@@ -154,9 +157,54 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
                     // highlight the ACCESS field
                     runOnUiThread(() -> {
                         SpannableString spannableStr = new SpannableString(pageE4.getText().toString());
-                        BackgroundColorSpan backgroundColorSpan = new BackgroundColorSpan(Color.YELLOW);
-                        spannableStr.setSpan(backgroundColorSpan, 4, 6, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+                        BackgroundColorSpan backgroundColorSpan = new BackgroundColorSpan(Color.CYAN);
+                        spannableStr.setSpan(backgroundColorSpan, 0, 2, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
                         pageE4.setText(spannableStr);
+                    });
+
+                    // counter
+                    byte[] nfcCounter = getTagCounterResponse(nfcA);
+                    String nfcTagCounterString = "";
+                    if (nfcCounter != null) {
+                        nfcTagCounterString = getDec(nfcCounter);
+                    } else {
+                        nfcTagCounterString = "counter not enabled";
+                    }
+
+                    String finalNfcTagCounterString = nfcTagCounterString;
+                    runOnUiThread(() -> {
+                        counterField.setText(finalNfcTagCounterString);
+                    });
+
+                    // signature
+                    // see https://www.nxp.com/docs/en/application-note/AN12196.pdf
+                    // pages 50/51
+                    // NTAG public key:
+                    // 048A9B380AF2EE1B98DC417FECC263F8449C7625CECE82D9B916C992DA209D68 422B81EC20B65A66B5102A61596AF3379200599316A00A1410
+/*
+NTAG 424 DNA contains the NXP Originality Signature:
+• It is computed according to Elliptic Curve DSA (ECDSA) based on the UID
+• Key pair created in NXP Fabs HSM. Private key stored in high secure HSM in NXP
+premises
+• Signature is 56 bytes long and according to SEC standard the secp224r1 curve is
+taken
+Asymmetric procedure consists of:
+• retrieve Originality Signature (56 bytes) from the PICC with Cmd.Read_Sig command (NTAG 424 needs to be in ISO14443 - Layer 4 level).
+• public key is required by the verifier - available for public below
+• ECDSA signature verifying operation needs to be applied - procedure and sample code
+(C#, Java, C) can be found in Application Note [9]
+ */
+
+                    byte[] nfcSignature = getTagSignatureResponse(nfcA);
+                    String nfcTagSignatureString = "";
+                    if (nfcCounter != null) {
+                        nfcTagCounterString = bytesToHex(nfcSignature);
+                    } else {
+                        nfcTagCounterString = "signature not available";
+                    }
+                    String finalNfcTagSignatureString = nfcTagSignatureString;
+                    runOnUiThread(() -> {
+                        signatureField.setText(finalNfcTagSignatureString);
                     });
 
                     String finalNfcaRawText = nfcaContent;
@@ -307,6 +355,71 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
         return response;
     }
 
+    private byte[] getTagCounterResponse(NfcA nfcA) {
+        boolean result;
+        byte[] response;
+        byte[] command = new byte[]{
+                (byte) 0x39,  // READ_CNT
+        };
+        try {
+            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
+            if (response == null) {
+                // either communication to the tag was lost or a NACK was received
+                return null;
+            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
+                // NACK response according to Digital Protocol/T2TOP
+                // Log and return
+                return null;
+            } else {
+                // success: response contains ACK or actual data
+                System.out.println("READ_CNT response: " + bytesToHex(response));
+                result = true;
+            }
+        } catch (TagLostException e) {
+            // Log and return
+            runOnUiThread(() -> {
+                readResult.setText("ERROR: Tag lost exception");
+            });
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return response;
+    }
+
+    private byte[] getTagSignatureResponse(NfcA nfcA) {
+        boolean result;
+        byte[] response;
+        byte[] command = new byte[]{
+                (byte) 0x3C,  // READ_SIG
+        };
+        try {
+            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
+            if (response == null) {
+                // either communication to the tag was lost or a NACK was received
+                return null;
+            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
+                // NACK response according to Digital Protocol/T2TOP
+                // Log and return
+                return null;
+            } else {
+                // success: response contains ACK or actual data
+                System.out.println("READ_CNT response: " + bytesToHex(response));
+                result = true;
+            }
+        } catch (TagLostException e) {
+            // Log and return
+            runOnUiThread(() -> {
+                readResult.setText("ERROR: Tag lost exception");
+            });
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return response;
+    }
 
     public static String bytesToHex(byte[] bytes) {
         StringBuffer result = new StringBuffer();
@@ -335,13 +448,14 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
         return data;
     }
 
-    private static String printByteArray(byte[] bytes){
+    private static String printByteArrayBinary(byte[] bytes) {
         String output = "";
-        for (byte b1 : bytes){
+        for (byte b1 : bytes) {
             String s1 = String.format("%8s", Integer.toBinaryString(b1 & 0xFF)).replace(' ', '0');
             //s1 += " " + Integer.toHexString(b1);
             //s1 += " " + b1;
-            output = output + " " + s1;
+            //output = output + " " + s1;
+            output = s1;
             //System.out.println(s1);
         }
         return output;
