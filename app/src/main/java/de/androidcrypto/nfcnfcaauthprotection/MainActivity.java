@@ -28,6 +28,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
     TextView nfcResult;
     Button fastRead, writeAuth, setWriteProtection, removeWriteProtection;
+    Button test, verifySignature;
     private NfcAdapter mNfcAdapter;
 
     @Override
@@ -43,6 +44,9 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
         setWriteProtection = findViewById(R.id.btnMainSetWriteProtection);
         removeWriteProtection = findViewById(R.id.btnMainRemoveWriteProtection);
+
+        test = findViewById(R.id.btnMainTest);
+        verifySignature = findViewById(R.id.btnMainVerifySignature);
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
 
@@ -77,7 +81,58 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 startActivity(intent);
             }
         });
+
+        test.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, CommandActivity.class);
+                startActivity(intent);
+                /*
+                byte accessByte = (byte) 0x80;
+                byte accessByteUnset = unsetBitInByte(accessByte, 7);
+                byte accessByteSet = setBitInByte(accessByteUnset, 7);
+                System.out.println("accessByte  : " + accessByte + " " + printByteArrayBinary(new byte[(byte) accessByte]));
+                System.out.println("accessByte u: " + accessByteUnset + " " + printByteArrayBinary(new byte[(byte) accessByteUnset]));
+                System.out.println("accessByte s: " + accessByteSet + " " + printByteArrayBinary(new byte[(byte) accessByteSet]));
+
+                 */
+            }
+        });
+
+        verifySignature.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, VerifyTagSignatureActivity.class);
+                startActivity(intent);
+            }
+        });
     }
+
+    // ##### TEST METHODS #####
+    // position is 0 based starting from right to left
+    private byte setBitInByte(byte input, int pos) {
+        return (byte) (input | (1 << pos));
+    }
+
+    // position is 0 based starting from right to left
+    private byte unsetBitInByte(byte input, int pos) {
+        return (byte) (input & ~(1 << pos));
+    }
+
+    private static String printByteArrayBinary(byte[] bytes) {
+        String output = "";
+        for (byte b1 : bytes) {
+            String s1 = String.format("%8s", Integer.toBinaryString(b1 & 0xFF)).replace(' ', '0');
+            //s1 += " " + Integer.toHexString(b1);
+            //s1 += " " + b1;
+            //output = output + " " + s1;
+            output = s1;
+            //System.out.println(s1);
+        }
+        return output;
+    }
+
+    // ##### TEST METHODS END #####
 
     // This method is run in another thread when a card is discovered
     // !!!! This method cannot cannot direct interact with the UI Thread

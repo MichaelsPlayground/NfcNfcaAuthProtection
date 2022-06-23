@@ -32,7 +32,7 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
     TextView nfcResult;
     Button fastRead, sample2, setWriteProtection, removeWriteProtection;
     private NfcAdapter mNfcAdapter;
-    boolean readProtectionEnabled = false;
+    boolean readProtectionChecked = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -161,7 +161,7 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
                     writeToUi2(nfcResult, nfcaContent);
 
                     // enable password protection for reading as well
-                    readProtectionEnabled = enableReadProtectionSwitch.isEnabled();
+                    readProtectionChecked = enableReadProtectionSwitch.isChecked();
 
                     // write password to page 43/133/229 (NTAG 213/215/216)  ### WRONG ### page 4 for testing purposes
                     boolean responseSuccessful;
@@ -220,7 +220,7 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
                     0 = AUTHLIM (continued)
                     */
                     // setting bit 7 depends on readProtectionEnabled
-                    if (readProtectionEnabled) {
+                    if (readProtectionChecked) {
                         // set bit 7 to 1, pos is 0 based
                         accessByte = setBitInByte(accessByte, 7);
                     } else {
@@ -233,7 +233,7 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
                     ab[0] = accessByte;
                     writeToUiAppend(nfcResult, "Configuration page 1 new: " + bytesToHex(configurationPage1) + " ACCESS byte: " + printByteArrayBinary(ab));
                     // save the data
-                    writeToUiAppend(nfcResult, "configuration page 1 new: " + bytesToHex(configurationPage1));
+                    //writeToUiAppend(nfcResult, "configuration page 1 new: " + bytesToHex(configurationPage1));
                     // write the page back to tag
                     responseSuccessful = writeTagData(nfcA, 228, configurationPage1, nfcResult, response);
                     if (!responseSuccessful) return;

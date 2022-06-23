@@ -62,12 +62,13 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
             nfcA = NfcA.get(tag);
 
             if (nfcA != null) {
+                /*
                 runOnUiThread(() -> {
                     Toast.makeText(getApplicationContext(),
                             "NFC tag is Nfca compatible",
                             Toast.LENGTH_SHORT).show();
                 });
-
+                */
                 // Make a Sound
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     ((Vibrator) getSystemService(VIBRATOR_SERVICE)).vibrate(VibrationEffect.createOneShot(150, 10));

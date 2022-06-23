@@ -197,10 +197,10 @@ Asymmetric procedure consists of:
 
                     byte[] nfcSignature = getTagSignatureResponse(nfcA);
                     String nfcTagSignatureString = "";
-                    if (nfcCounter != null) {
-                        nfcTagCounterString = bytesToHex(nfcSignature);
+                    if (nfcSignature != null) {
+                        nfcTagSignatureString = bytesToHex(nfcSignature);
                     } else {
-                        nfcTagCounterString = "signature not available";
+                        nfcTagSignatureString = "signature not available";
                     }
                     String finalNfcTagSignatureString = nfcTagSignatureString;
                     runOnUiThread(() -> {
@@ -356,7 +356,6 @@ Asymmetric procedure consists of:
     }
 
     private byte[] getTagCounterResponse(NfcA nfcA) {
-        boolean result;
         byte[] response;
         byte[] command = new byte[]{
                 (byte) 0x39,  // READ_CNT
@@ -373,7 +372,6 @@ Asymmetric procedure consists of:
             } else {
                 // success: response contains ACK or actual data
                 System.out.println("READ_CNT response: " + bytesToHex(response));
-                result = true;
             }
         } catch (TagLostException e) {
             // Log and return
@@ -389,32 +387,37 @@ Asymmetric procedure consists of:
     }
 
     private byte[] getTagSignatureResponse(NfcA nfcA) {
-        boolean result;
         byte[] response;
         byte[] command = new byte[]{
-                (byte) 0x3C,  // READ_SIG
+                (byte) (0x3C),  // READ_SIG
+                (byte) (0x00)
         };
         try {
+            System.out.println("*** before getTagSignatureResponse transceive");
             response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
+            System.out.println("*** after getTagSignatureResponse transceive");
             if (response == null) {
                 // either communication to the tag was lost or a NACK was received
+                System.out.println("*** response == null");
                 return null;
             } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
                 // NACK response according to Digital Protocol/T2TOP
                 // Log and return
+                System.out.println("*** Bad NACK response: " + bytesToHex(response));
                 return null;
             } else {
                 // success: response contains ACK or actual data
-                System.out.println("READ_CNT response: " + bytesToHex(response));
-                result = true;
+                System.out.println("*** READ_SIG response: " + bytesToHex(response));
             }
         } catch (TagLostException e) {
             // Log and return
+            System.out.println("*** TagLostException");
             runOnUiThread(() -> {
                 readResult.setText("ERROR: Tag lost exception");
             });
             return null;
         } catch (IOException e) {
+            System.out.println("*** IOException");
             e.printStackTrace();
             return null;
         }
