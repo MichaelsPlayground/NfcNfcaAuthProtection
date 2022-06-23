@@ -19,6 +19,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.switchmaterial.SwitchMaterial;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -26,10 +28,11 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
 
     com.google.android.material.textfield.TextInputLayout passwordDecoration, packDecoration, startProtectionDecoration;
     com.google.android.material.textfield.TextInputEditText passwordField, packField, startProtection;
-
+    SwitchMaterial enableReadProtectionSwitch;
     TextView nfcResult;
     Button fastRead, sample2, setWriteProtection, removeWriteProtection;
     private NfcAdapter mNfcAdapter;
+    boolean readProtectionForReadingEnabled = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +45,8 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
         packDecoration = findViewById(R.id.etWriteProtectionPackDecoration);
         startProtection = findViewById(R.id.etWriteProtectionStartProtection);
         startProtectionDecoration = findViewById(R.id.etWriteProtectionStartProtectionDecoration);
+        enableReadProtectionSwitch = findViewById(R.id.swReadProtection);
+
         nfcResult = findViewById(R.id.tvWriteProtectionNfcaResult);
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
@@ -155,6 +160,9 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
                     nfcaContent = nfcaContent + "Protection starting page: " + startProtectionPage + "\n";
                     writeToUi2(nfcResult, nfcaContent);
 
+                    // enable password protection for reading as well
+                    readProtectionForReadingEnabled = enableReadProtectionSwitch.isEnabled();
+
                     // write password to page 43/133/229 (NTAG 213/215/216)  ### WRONG ### page 4 for testing purposes
                     boolean responseSuccessful;
                     //responseSuccessful = writeTagData(nfcA, 04, passwordByte, nfcResult, response);
@@ -168,11 +176,11 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
 
                     // write auth0 to page 41/131/227 (NTAG 213/215/216)### WRONG ### page 5 for testing purposes
                     // before writing the complete page we need to read the data from byte 0..2
-                    byte[] configurationPages = new byte[16];
-                    responseSuccessful = getTagData(nfcA, 227, nfcResult, configurationPages);
+                    byte[] configurationPages0 = new byte[16];
+                    responseSuccessful = getTagData(nfcA, 227, nfcResult, configurationPages0);
                     if (!responseSuccessful) return;
                     byte[] configurationPage1 = new byte[4];
-                    System.arraycopy(configurationPages, 0, configurationPage1, 0, 4);
+                    System.arraycopy(configurationPages0, 0, configurationPage1, 0, 4);
                     writeToUiAppend(nfcResult, "configuration page old: " + bytesToHex(configurationPage1));
                     // change byte 03 for AUTH0 data
                     configurationPage1[3] = (byte) (startProtectionPage & 0x0ff);
@@ -180,6 +188,15 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
                     // write the page back to tag
                     responseSuccessful = writeTagData(nfcA, 227, configurationPage1, nfcResult, response);
                     if (!responseSuccessful) return;
+
+                    // write BIT for enabling read protection to page 42/132/228 (NTAG 213/215/216) ### WRONG ### page 5 for testing purposes
+                    // before writing the complete page we need to read the data from byte 0..2
+                    byte[] configurationPages1 = new byte[16];
+                    responseSuccessful = getTagData(nfcA, 228, nfcResult, configurationPages1);
+                    if (!responseSuccessful) return;
+                    // get value of byte 0 = access
+                    byte[] access = new byte[4];
+                    ###
 
                 } finally {
                     try {
