@@ -65,8 +65,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         setWriteProtection.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-               Intent intent = new Intent(MainActivity.this, SetWriteProtectionActivity.class);
-               startActivity(intent);
+                Intent intent = new Intent(MainActivity.this, SetWriteProtectionActivity.class);
+                startActivity(intent);
             }
         });
 
@@ -95,12 +95,13 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             nfcA = NfcA.get(tag);
 
             if (nfcA != null) {
+                /*
                 runOnUiThread(() -> {
                     Toast.makeText(getApplicationContext(),
                             "NFC tag is Nfca compatible",
                             Toast.LENGTH_SHORT).show();
                 });
-
+                */
                 // Make a Sound
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     ((Vibrator) getSystemService(VIBRATOR_SERVICE)).vibrate(VibrationEffect.createOneShot(150, 10));
@@ -143,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     String dataString = inputField.getText().toString();
 
                     // limitation: maximal 8 characters
-                    if (dataString.length() > 8 ) {
+                    if (dataString.length() > 8) {
                         dataString = dataString.substring(0, 8);
                     }
 
@@ -220,6 +221,11 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                         // don't write a new page
                         nfcaContent = nfcaContent + "write result: SUCCESS" + "\n";
                         writeToUi(nfcResult, nfcaContent);
+                        runOnUiThread(() -> {
+                            Toast.makeText(getApplicationContext(),
+                                    "Data written SUCCESSFUL",
+                                    Toast.LENGTH_SHORT).show();
+                        });
                         try {
                             nfcA.close();
                         } catch (IOException e) {
@@ -290,7 +296,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                         //System.arraycopy(response, 0, ntagMemory, (nfcaMaxTranceive4ByteLength * i), nfcaMaxTranceive4ByteLength);
                     }
 
-                } catch(TagLostException e){
+                } catch (TagLostException e) {
                     // Log and return
                     nfcaContent = nfcaContent + "ERROR: Tag lost exception";
                     String finalNfcaText = nfcaContent;
@@ -299,7 +305,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                         System.out.println(finalNfcaText);
                     });
                     return;
-                } catch(IOException e){
+                } catch (IOException e) {
                     nfcaContent = nfcaContent + "IOException: " + e.toString();
                     String finalNfcaText = nfcaContent;
                     runOnUiThread(() -> {
@@ -316,15 +322,19 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     nfcResult.setText(finalNfcaRawText);
                     nfcResult.setText(finalNfcaText);
                     System.out.println(finalNfcaRawText);
+                    Toast.makeText(getApplicationContext(),
+                            "Data written SUCCESSSFUL",
+                            Toast.LENGTH_SHORT).show();
+
                 });
-            } else{
+            } else {
                 runOnUiThread(() -> {
                     Toast.makeText(getApplicationContext(),
                             "NFC tag is NOT Nfca compatible",
                             Toast.LENGTH_SHORT).show();
                 });
             }
-        } catch(IOException e) {
+        } catch (IOException e) {
             //Trying to catch any ioexception that may be thrown
             e.printStackTrace();
             String finalNfcaRawText = "ERROR: IOException";

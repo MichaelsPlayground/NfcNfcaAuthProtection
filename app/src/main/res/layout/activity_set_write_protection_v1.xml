@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".RemoveWriteProtectionActivity">
+    tools:context=".SetWriteProtectionActivity">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,7 +16,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:text="This app removes the password for write protection with NCFA to a NFC-Tag of type NXP NTAG216 only."
+            android:text="This app writes the password for write protection with NCFA to a NFC-Tag of type NXP NTAG216 only."
             android:textAlignment="center"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -26,7 +26,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:text="WARNING: When a tag is discovered the password is set to (default) FF FF FF FF, the PACK is FF FF and the Start Protection is set to FF. These defaults are written on the tag without further notice.\nDO NOT USE THIS WITH NTAGs NEEDED IN REAL APPLICATIONS OR NDEF."
+            android:text="WARNING: When a tag is discovered the password in the password field is written on the tag without further notice.\nDO NOT USE THIS WITH NTAGs NEEDED IN REAL APPLICATIONS OR NDEF."
             android:textAlignment="center"
             android:textSize="16sp"
             android:textStyle="bold" />
@@ -39,13 +39,13 @@
 
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:id="@+id/etRemoveProtectionPasswordDecoration"
+            android:id="@+id/etWriteProtectionPasswordDecoration"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="8dp"
-            android:hint="old Password is exact 4 alphanumeric characters"
+            android:hint="Password is exact 4 alphanumeric characters"
             app:boxCornerRadiusBottomEnd="5dp"
             app:boxCornerRadiusBottomStart="5dp"
             app:boxCornerRadiusTopEnd="5dp"
@@ -55,7 +55,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etRemoveProtectionPassword"
+                android:id="@+id/etWriteProtectionPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
@@ -66,13 +66,13 @@
 
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:id="@+id/etRemoveProtectionPackDecoration"
+            android:id="@+id/etWriteProtectionPackDecoration"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="8dp"
-            android:hint="old Pack is exact 2 alphanumeric characters"
+            android:hint="Pack is exact 2 alphanumeric characters"
             app:boxCornerRadiusBottomEnd="5dp"
             app:boxCornerRadiusBottomStart="5dp"
             app:boxCornerRadiusTopEnd="5dp"
@@ -82,7 +82,7 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etRemoveProtectionPack"
+                android:id="@+id/etWriteProtectionPack"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
@@ -93,13 +93,13 @@
 
         <com.google.android.material.textfield.TextInputLayout
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:id="@+id/etRemoveProtectionStartProtectionDecoration"
+            android:id="@+id/etWriteProtectionStartProtectionDecoration"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="8dp"
-            android:hint="fixed protection start pages (default)"
+            android:hint="Pages beginning with below number are protected"
             app:boxCornerRadiusBottomEnd="5dp"
             app:boxCornerRadiusBottomStart="5dp"
             app:boxCornerRadiusTopEnd="5dp"
@@ -109,14 +109,14 @@
             app:layout_constraintTop_toTopOf="parent">
 
             <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/etRemoveProtectionStartProtection"
+                android:id="@+id/etWriteProtectionStartProtection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
-                android:focusable="false"
+                android:focusable="true"
                 android:inputType="number"
                 android:maxLines="1"
-                android:text="255"
+                android:text="4"
                 tools:ignore="KeyboardInaccessibleWidget" />
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -127,7 +127,7 @@
             app:dividerInsetEnd="16dp"/>
 
         <TextView
-            android:id="@+id/tvRemoveProtectionNfcaResult"
+            android:id="@+id/tvWriteProtectionNfcaResult"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"

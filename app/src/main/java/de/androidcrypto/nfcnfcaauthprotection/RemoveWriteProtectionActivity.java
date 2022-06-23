@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public class RemoveWriteProtectionActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
 
@@ -79,6 +80,7 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
 
                 // check that the tag is a NTAG213/215/216 manufactured by NXP - stop if not
                 String ntagVersion = NfcIdentifyNtag.checkNtagType(nfcA, tag.getId());
+                /*
                 if (ntagVersion.equals("0")) {
                     runOnUiThread(() -> {
                         nfcResult.setText("NFC tag is NOT of type NXP NTAG213/215/216");
@@ -88,7 +90,16 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
                     });
                     return;
                 }
-
+                */
+                if (!ntagVersion.equals("216")) {
+                    runOnUiThread(() -> {
+                        nfcResult.setText("NFC tag is NOT of type NXP NTAG216");
+                        Toast.makeText(getApplicationContext(),
+                                "NFC tag is NOT of type NXP NTAG216",
+                                Toast.LENGTH_SHORT).show();
+                    });
+                    return;
+                }
                 int nfcaMaxTranceiveLength = nfcA.getMaxTransceiveLength(); // important for the readFast command
                 int ntagPages = NfcIdentifyNtag.getIdentifiedNtagPages();
                 int ntagMemoryBytes = NfcIdentifyNtag.getIdentifiedNtagMemoryBytes();
@@ -111,6 +122,11 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
                     // password: 1234 = x31 x32 x33 x34
                     // pack: oK = x6f x4B
                     // protectionStartingPage = 4
+
+                    // default values for unprotected tag
+                    // password: 1234 = xFF xFF xFF xFF
+                    // pack: oK = xFF xFF
+                    // protectionStartingPage = 255
 
                     // get data from passwordField
                     String passwordString = passwordField.getText().toString();
@@ -155,39 +171,52 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
                     writeToUi2(nfcResult, nfcaContent);
 
                     // send the pwdAuth command
+
+                    //passwordByte = passwordByteDefault.clone();
+                    boolean responseSuccessful;
+                    System.out.println("*** start authentication");
+                    //responseSuccessful = sendPwdAuthData(nfcA, passwordByte, nfcResult, response);
+                    //if (!responseSuccessful) return;
+                    response = sendPwdAuthDataResponse(nfcA, passwordByte);
+                    if (response == null) {
+                        writeToUiAppend(nfcResult, "ERROR while verifying password, aborted");
+                        return;
+                    }
+                    // check that response equals to entered PACK
+                    writeToUiAppend(nfcResult, "response from PWD_AUTH: " + bytesToHex(response));
+                    boolean packResponseAccepted = false;
+                    packResponseAccepted = Arrays.equals(response, packByte);
+                    if (packResponseAccepted) {
+                        writeToUiAppend(nfcResult, "Password authentication successful, PACK is matching");
+                    } else {
+                        writeToUiAppend(nfcResult, "Password authentication FAILURE, protection NOT removed");
+                        return;
+                    }
+
+                    // write password to page 43/133/229 (NTAG 213/215/216)  ### WRONG ### page 4 for testing purposes
                     // this is the default value
-                    byte[]  passwordByteDefault = new byte[]{
+                    byte[] passwordByteDefault = new byte[]{
                             (byte) (255 & 0x0ff),
                             (byte) (255 & 0x0ff),
                             (byte) (255 & 0x0ff),
                             (byte) (255 & 0x0ff)
                     };
-                    byte[]  packByteDefault = new byte[]{
+                    //boolean responseSuccessful;
+                    //responseSuccessful = writeTagData(nfcA, 04, passwordByte, nfcResult, response);
+                    responseSuccessful = writeTagData(nfcA, 229, passwordByteDefault, nfcResult, response);
+                    if (!responseSuccessful) return;
+
+                    // write pack to page 44/134/230 (NTAG 213/215/216) ### WRONG ### page 5 for testing purposes
+                    //responseSuccessful = writeTagData(nfcA, 05, packBytePage, nfcResult, response);
+                    // this is the default value
+                    byte[] packByteDefault = new byte[]{
                             (byte) (255 & 0x0ff),
                             (byte) (255 & 0x0ff),
                             (byte) (0 & 0x0ff),
                             (byte) (0 & 0x0ff)
                     };
-                    //passwordByte = passwordByteDefault.clone();
-                    boolean responseSuccessful;
-                    System.out.println("*** start authentication");
-                    responseSuccessful = sendPwdAuthData(nfcA, passwordByte, nfcResult, response);
+                    responseSuccessful = writeTagData(nfcA, 230, packByteDefault, nfcResult, response);
                     if (!responseSuccessful) return;
-                    // check that response equals to entered PACK
-                    writeToUiAppend(nfcResult, "response from PWD_AUTH: " + bytesToHex(response));
-
-
-
-                    // write password to page 43/133/229 (NTAG 213/215/216)  ### WRONG ### page 4 for testing purposes
-                    //boolean responseSuccessful;
-                    //responseSuccessful = writeTagData(nfcA, 04, passwordByte, nfcResult, response);
-  //                  responseSuccessful = writeTagData(nfcA, 229, passwordByte, nfcResult, response);
-  //                  if (!responseSuccessful) return;
-
-                    // write pack to page 44/134/230 (NTAG 213/215/216) ### WRONG ### page 5 for testing purposes
-                    //responseSuccessful = writeTagData(nfcA, 05, packBytePage, nfcResult, response);
-  //                  responseSuccessful = writeTagData(nfcA, 230, packBytePage, nfcResult, response);
-  //                  if (!responseSuccessful) return;
 
                     // write auth0 to page 41/131/227 (NTAG 213/215/216)### WRONG ### page 5 for testing purposes
                     // before writing the complete page we need to read the data from byte 0..2
@@ -197,13 +226,18 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
                     byte[] configurationPage1 = new byte[4];
                     System.arraycopy(configurationPages, 0, configurationPage1, 0, 4);
                     writeToUiAppend(nfcResult, "configuration page old: " + bytesToHex(configurationPage1));
-                    // change byte 03 for AUTH0 data
+                    // change byte 03 for AUTH0 data, this should be fixed = default FF = 255
                     configurationPage1[3] = (byte) (startProtectionPage & 0x0ff);
                     writeToUiAppend(nfcResult, "configuration page new: " + bytesToHex(configurationPage1));
                     // write the page back to tag
-  //                  responseSuccessful = writeTagData(nfcA, 227, configurationPage1, nfcResult, response);
-  //                  if (!responseSuccessful) return;
-
+                    responseSuccessful = writeTagData(nfcA, 227, configurationPage1, nfcResult, response);
+                    if (!responseSuccessful) return;
+                    writeToUiAppend(nfcResult, "Password protection removed");
+                    runOnUiThread(() -> {
+                       Toast.makeText(getApplicationContext(),
+                                "Password protection removed",
+                                Toast.LENGTH_SHORT).show();
+                    });
                 } finally {
                     try {
                         nfcA.close();
@@ -216,11 +250,43 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
         } catch (TagLostException e) {
             // Log and return
             writeToUiAppend(nfcResult, "ERROR: Tag lost exception");
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             writeToUiAppend(nfcResult, "ERROR: IOException " + e.toString());
             e.printStackTrace();
         }
+    }
+
+    private byte[] sendPwdAuthDataResponse(NfcA nfcA, byte[] passwordByte) {
+        byte[] response = new byte[0];
+        byte[] command = new byte[]{
+                (byte) 0x1B,  // PWD_AUTH
+                passwordByte[0],
+                passwordByte[1],
+                passwordByte[2],
+                passwordByte[3]
+        };
+        try {
+            System.out.println("*** sendPwdAuthData before tranceive");
+            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
+            System.out.println("*** sendPwdAuthData after tranceive");
+            if (response == null) {
+                // either communication to the tag was lost or a NACK was received
+                return null;
+            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
+                // NACK response according to Digital Protocol/T2TOP
+                // Log and return
+                return null;
+            } else {
+                // success: response contains (P)ACK or actual data
+            }
+        } catch (TagLostException e) {
+            // Log and return
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return response; // response contains the response
     }
 
     private boolean sendPwdAuthData(NfcA nfcA, byte[] passwordByte, TextView textView,
@@ -318,6 +384,37 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
             return false;
         }
         return result; // response contains the response
+    }
+
+    private byte[] getTagDataResponse(NfcA nfcA, int page) {
+        boolean result;
+        byte[] response;
+        byte[] command = new byte[]{
+                (byte) 0x30,  // READ
+                (byte) (page & 0x0ff), // page 0
+        };
+        try {
+            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
+            if (response == null) {
+                // either communication to the tag was lost or a NACK was received
+                return null;
+            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
+                // NACK response according to Digital Protocol/T2TOP
+                // Log and return
+                return null;
+            } else {
+                // success: response contains ACK or actual data
+                System.out.println("page " + page + ": " + bytesToHex(response));
+                result = true;
+            }
+        } catch (TagLostException e) {
+            // Log and return
+            return null;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return response;
     }
 
     private boolean getTagData(NfcA nfcA, int page, TextView textView, byte[] response) {

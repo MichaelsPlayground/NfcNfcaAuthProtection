@@ -4,13 +4,12 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/layout/activity_fast_read.xml" value="0.14842958459979735" />
-        <entry key="app/src/main/res/layout/activity_fast_read_auth.xml" value="0.1344984802431611" />
+        <entry key="app/src/main/res/layout/activity_fast_read_auth.xml" value="0.1" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.19091751621872105" />
         <entry key="app/src/main/res/layout/activity_ntag_data_reading.xml" value="0.15526849037487336" />
-        <entry key="app/src/main/res/layout/activity_ntag_data_reading_org.xml" value="0.1344984802431611" />
-        <entry key="app/src/main/res/layout/activity_ntag_data_reading_v1.xml" value="0.1344984802431611" />
-        <entry key="app/src/main/res/layout/activity_remove_write_protection.xml" value="0.1344984802431611" />
+        <entry key="app/src/main/res/layout/activity_remove_write_protection.xml" value="0.1398148148148148" />
         <entry key="app/src/main/res/layout/activity_set_write_protection.xml" value="0.14842958459979735" />
+        <entry key="app/src/main/res/layout/activity_set_write_protection_v1.xml" value="0.1398148148148148" />
         <entry key="app/src/main/res/layout/activity_write_auth.xml" value="0.15526849037487336" />
       </map>
     </option>
