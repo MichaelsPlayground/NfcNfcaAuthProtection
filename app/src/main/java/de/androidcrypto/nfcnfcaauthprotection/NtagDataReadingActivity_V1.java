@@ -1,7 +1,5 @@
 package de.androidcrypto.nfcnfcaauthprotection;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -18,17 +16,17 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.BackgroundColorSpan;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.BitSet;
 
-public class NtagDataReadingActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
+public class NtagDataReadingActivity_V1 extends AppCompatActivity implements NfcAdapter.ReaderCallback {
 
     EditText page00, page01, page02, page03, page04, page05, pageE2, pageE3, pageE4, pageE5, pageE6;
-    EditText pageE4Byte0;
+    EditText getPageE4Byte0;
     EditText readResult;
     private NfcAdapter mNfcAdapter;
 
@@ -45,7 +43,7 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
         pageE2 = findViewById(R.id.etNtagReadE2);
         pageE3 = findViewById(R.id.etNtagReadE3);
         pageE4 = findViewById(R.id.etNtagReadE4);
-        pageE4Byte0 = findViewById(R.id.etNtagReadE4Byte0);
+        getPageE4Byte0 = findViewById(R.id.etNtagReadE4Byte0);
         pageE5 = findViewById(R.id.etNtagReadE5);
         pageE6 = findViewById(R.id.etNtagReadE6);
         readResult = findViewById(R.id.etNtagReadResult);
@@ -120,26 +118,6 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
                     if (!responseSuccessful) return;
                     responseSuccessful = getTagData(nfcA, 226, pageE2, pageE3, pageE4, pageE5, readResult);
                     if (!responseSuccessful) return;
-                    byte[] responsePage226 = getTagDataResponse(nfcA, 226);
-                    byte[] responsePage228Byte0 = new byte[1];
-                    System.arraycopy(responsePage226, 10, responsePage228Byte0, 0, 1);
-                    // analyse the bits in pageE4 Byte 0
-                    //byte pageE4Byte0Byte = hexStringToByteArray(pageE4.getText().toString())[3];
-
-                    //String s1;
-                    //s1 = printByteArray(hexStringToByteArray(pageE4.getText().toString()));
-                    String s1 = printByteArray(responsePage228Byte0);
-                    //byte pageE4Byte0Byte = (byte) 129;
-                    //String s1 = String.format("%8s", Integer.toBinaryString(pageE4Byte0Byte & 0xFF)).replace(' ', '0');
-                    //System.out.println(s1); // 10000001
-
-                    runOnUiThread(() -> {
-                        pageE4Byte0.setText(s1);
-                        //nfcContentParsed.setText(finalNfcaText);
-                        System.out.println(s1);
-                    });
-                    //System.out.println( s );
-
                     responseSuccessful = getTagData(nfcA, 230, pageE6, null, null, null, readResult);
                     if (!responseSuccessful) return;
 
@@ -149,14 +127,6 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
                         BackgroundColorSpan backgroundColorSpan = new BackgroundColorSpan(Color.GREEN);
                         spannableStr.setSpan(backgroundColorSpan, 6, 8, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
                         pageE3.setText(spannableStr);
-                    });
-
-                    // highlight the ACCESS field
-                    runOnUiThread(() -> {
-                        SpannableString spannableStr = new SpannableString(pageE4.getText().toString());
-                        BackgroundColorSpan backgroundColorSpan = new BackgroundColorSpan(Color.YELLOW);
-                        spannableStr.setSpan(backgroundColorSpan, 4, 6, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
-                        pageE4.setText(spannableStr);
                     });
 
                     String finalNfcaRawText = nfcaContent;
@@ -273,40 +243,6 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
         return result;
     }
 
-    private byte[] getTagDataResponse(NfcA nfcA, int page) {
-        boolean result;
-        byte[] response;
-        byte[] command = new byte[]{
-                (byte) 0x30,  // READ
-                (byte) (page & 0x0ff), // page 0
-        };
-        try {
-            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
-            if (response == null) {
-                // either communication to the tag was lost or a NACK was received
-                return null;
-            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
-                // NACK response according to Digital Protocol/T2TOP
-                // Log and return
-                return null;
-            } else {
-                // success: response contains ACK or actual data
-                System.out.println("page " + page + ": " + bytesToHex(response));
-                result = true;
-            }
-        } catch (TagLostException e) {
-            // Log and return
-            runOnUiThread(() -> {
-                readResult.setText("ERROR: Tag lost exception");
-            });
-            return null;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-        return response;
-    }
-
 
     public static String bytesToHex(byte[] bytes) {
         StringBuffer result = new StringBuffer();
@@ -323,41 +259,6 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
             factor *= 256l;
         }
         return result + "";
-    }
-
-    public static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i + 1), 16));
-        }
-        return data;
-    }
-
-    private static String printByteArray(byte[] bytes){
-        String output = "";
-        for (byte b1 : bytes){
-            String s1 = String.format("%8s", Integer.toBinaryString(b1 & 0xFF)).replace(' ', '0');
-            //s1 += " " + Integer.toHexString(b1);
-            //s1 += " " + b1;
-            output = output + " " + s1;
-            //System.out.println(s1);
-        }
-        return output;
-    }
-
-    // https://stackoverflow.com/a/29396837/8166854
-    public static boolean testBit(byte b, int n) {
-        int mask = 1 << n; // equivalent of 2 to the nth power
-        return (b & mask) != 0;
-    }
-
-    // https://stackoverflow.com/a/29396837/8166854
-    public static boolean testBit(byte[] array, int n) {
-        int index = n >>> 3; // divide by 8
-        int mask = 1 << (n & 7); // n modulo 8
-        return (array[index] & mask) != 0;
     }
 
     private void showWirelessSettings() {
