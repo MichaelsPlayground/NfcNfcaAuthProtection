@@ -194,7 +194,7 @@ Asymmetric procedure consists of:
 • ECDSA signature verifying operation needs to be applied - procedure and sample code
 (C#, Java, C) can be found in Application Note [9]
  */
-
+/*
                     byte[] nfcSignature = getTagSignatureResponse(nfcA);
                     String nfcTagSignatureString = "";
                     if (nfcSignature != null) {
@@ -206,7 +206,7 @@ Asymmetric procedure consists of:
                     runOnUiThread(() -> {
                         signatureField.setText(finalNfcTagSignatureString);
                     });
-
+*/
                     String finalNfcaRawText = nfcaContent;
                     String finalNfcaText = "parsed content:\n" + new String(ntagMemory, StandardCharsets.US_ASCII);
                     runOnUiThread(() -> {
@@ -359,6 +359,7 @@ Asymmetric procedure consists of:
         byte[] response;
         byte[] command = new byte[]{
                 (byte) 0x39,  // READ_CNT
+                (byte) 0x02,
         };
         try {
             response = nfcA.transceive(command); // response should be 16 bytes = 4 pages

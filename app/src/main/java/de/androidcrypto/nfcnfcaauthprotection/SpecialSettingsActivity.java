@@ -22,11 +22,14 @@ import java.io.IOException;
 public class SpecialSettingsActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
 
     Button enableCounter, disableCounter;
+    Button enablueUidMirror, disableUidMirror;
     EditText task, commandReponse;
     private NfcAdapter mNfcAdapter;
 
     final String ENABLE_COUNTER_TASK = "enable counter";
     final String DISABLE_COUNTER_TASK = "disable counter";
+    final String ENABLE_UID_MIRROR_TASK = "enable Uid mirror";
+    final String DISABLE_UID_MIRROR_TASK = "disable Uid mirror";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +38,9 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
 
         enableCounter = findViewById(R.id.btnSpecialSettingEnableCounter);
         disableCounter = findViewById(R.id.btnSpecialSettingDisableCounter);
+        enablueUidMirror = findViewById(R.id.btnSpecialSettingEnableUidMirror);
+        disableUidMirror = findViewById(R.id.btnSpecialSettingDisableCounter);
+
         task = findViewById(R.id.etSpecialSettingsTask);
         commandReponse = findViewById(R.id.etSpecialSettingsResponse);
 
@@ -51,6 +57,20 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             @Override
             public void onClick(View view) {
                 task.setText(DISABLE_COUNTER_TASK);
+            }
+        });
+
+        enablueUidMirror.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                task.setText(ENABLE_UID_MIRROR_TASK);
+            }
+        });
+
+        disableUidMirror.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                task.setText(DISABLE_UID_MIRROR_TASK);
             }
         });
     }
@@ -132,7 +152,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
                             break;
                         }
                         case DISABLE_COUNTER_TASK: {
-                            //response = writeDisableCounter(nfcA);
+                            response = writeDisableCounter(nfcA);
                             if (response == null) {
                                 writeToUiAppend(commandReponse, "Disabling the counter: FAILURE");
                                 return;
@@ -141,64 +161,34 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
                             }
                             break;
                         }
+                        case ENABLE_UID_MIRROR_TASK: {
+                            response = writeEnableUidMirror(nfcA);
+                            if (response == null) {
+                                writeToUiAppend(commandReponse, "Enabling the Uid mirror: FAILURE");
+                                return;
+                            } else {
+                                writeToUiAppend(commandReponse, "Enabling the Uid mirror: SUCCESS - code: " + bytesToHex(response));
+                            }
+                            break;
+                        }
+                        case DISABLE_UID_MIRROR_TASK: {
+                            response = writeDisableUidMirror(nfcA);
+                            if (response == null) {
+                                writeToUiAppend(commandReponse, "Enabling the Uid mirror: FAILURE");
+                                return;
+                            } else {
+                                writeToUiAppend(commandReponse, "Disabling the Uid mirror: SUCCESS - code: " + bytesToHex(response));
+                            }
+                            break;
+                        }
+
                         default: {
                             // to task
+                            writeToUiAppend(commandReponse, "choose a task by pressing the button");
                             return;
                         }
                     }
 
-
-                    // default values in form
-                    // password: 1234 = x31 x32 x33 x34
-                    // pack: oK = x6f x4B
-                    // protectionStartingPage = 4
-
-                    // get data from command1Field
-
-                    //String command1String = command1.getText().toString();
-                    String command1String = "";
-                    byte[] command1Byte = hexStringToByteArray(command1String);
-/*
-                    byte[] command = new byte[]{
-
-                            (byte) 0xA2,  // WRITE
-                            (byte) (page & 0x0ff), // page
-                            dataByte[0],
-                            dataByte[1],
-                            dataByte[2],
-                            dataByte[3]
-                    };
-  */
-                    try {
-                        response = nfcA.transceive(command1Byte); // response should be 16 bytes = 4 pages
-                        if (response == null) {
-                            // either communication to the tag was lost or a NACK was received
-                            writeToUiAppend(commandReponse, "ERROR: null response");
-                            return;
-                        } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
-                            // NACK response according to Digital Protocol/T2TOP
-                            // Log and return
-                            writeToUiAppend(commandReponse, "ERROR: NACK response: " + bytesToHex(response));
-                            return;
-                        } else {
-                            // success: response contains (P)ACK or actual data
-                            writeToUiAppend(commandReponse, "SUCCESS: response: " + bytesToHex(response));
-                            //System.out.println("write to page " + page + ": " + bytesToHex(response));
-
-                        }
-                    } catch (TagLostException e) {
-                        // Log and return
-                        System.out.println("*** TagLostException");
-                        runOnUiThread(() -> {
-                            commandReponse.setText("ERROR: Tag lost exception or command not recognized");
-                        });
-                        return;
-                    } catch (IOException e) {
-                        writeToUiAppend(commandReponse, "ERROR: IOException " + e.toString());
-                        System.out.println("*** IOException");
-                        e.printStackTrace();
-                        return;
-                    }
                 } finally {
                     try {
                         nfcA.close();
@@ -233,7 +223,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
 
     private void writeToUiAppend(TextView textView, String message) {
         runOnUiThread(() -> {
-            String newString = textView.getText().toString() + "\n" + message;
+            String newString = message + "\n" + textView.getText().toString();
             textView.setText(newString);
         });
     }
@@ -261,25 +251,163 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
          * This bit is NOT set in this command
          */
 
+        writeToUiAppend(commandReponse, "* Start enabling the counter *");
         // first read the page, set bit to 1 and save the page back to the tag
         // read page 228 = Configuration page 1
         byte[] readPageResponse = getTagDataResponse(nfcA, 228); // this is for NTAG216 only
         if (readPageResponse != null) {
             // get byte 0 = ACCESS byte
             byte accessByte = readPageResponse[0];
-            writeToUiAppend(commandReponse, "ACCESS content old: " + printByteArrayBinary(new byte[accessByte]));
+            writeToUiAppend(commandReponse, "ACCESS content old: " + printByteBinary(accessByte));
             // setting bit 4
-            accessByte = setBitInByte(accessByte, 4);
-            writeToUiAppend(commandReponse, "ACCESS content new: " + printByteArrayBinary(new byte[accessByte]));
+            byte accessByteNew;
+            accessByteNew = setBitInByte(accessByte, 4);
+            writeToUiAppend(commandReponse, "ACCESS content new: " + printByteBinary(accessByteNew));
             // rebuild the page data
-            readPageResponse[0] = accessByte;
+            readPageResponse[0] = accessByteNew;
             // write the page back to the tag
-            //byte[] writePageResponse = writeTagDataResponse(nfcA, 228, readPageResponse); // this is for NTAG216 only
-            byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
+            byte[] writePageResponse = writeTagDataResponse(nfcA, 228, readPageResponse); // this is for NTAG216 only
+            writeToUiAppend(commandReponse, "write page to tag: " + bytesToHex(readPageResponse));
+            //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
             if (writePageResponse != null) {
                 writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + bytesToHex(writePageResponse));
+                return readPageResponse;
             } else {
-                writeToUiAppend(commandReponse, "FAILURE: no writing on the tag with response: " + bytesToHex(writePageResponse));
+                writeToUiAppend(commandReponse, "FAILURE: no writing on the tag");
+            }
+        }
+        return null;
+    }
+
+    private byte[] writeDisableCounter(NfcA nfcA) {
+        /**
+         * WARNING: this command is hardcoded to work with a NTAG216
+         * the bit for enabling or disabling the counter is in pages 42/132/228 (0x2A / 0x84 / 0xE4)
+         * depending on the tag type
+         *
+         * byte 0 of this pages holds the ACCESS byte
+         * bit 4 is the counter enabling flag, 0 = disabled, 1 = enabled
+         *
+         * bit 3 is the counter password protection 0 = NFC counter not protected, 1 = enabled
+         * If the NFC counter password protection is enabled, the NFC tag will only respond to a
+         * READ_CNT command with the NFC counter value after a valid password verification
+         * This bit is NOT set in this command
+         */
+
+        writeToUiAppend(commandReponse, "* Start disabling the counter *");
+        // first read the page, set bit to 0 and save the page back to the tag
+        // read page 228 = Configuration page 1
+        byte[] readPageResponse = getTagDataResponse(nfcA, 228); // this is for NTAG216 only
+        if (readPageResponse != null) {
+            // get byte 0 = ACCESS byte
+            byte accessByte = readPageResponse[0];
+            writeToUiAppend(commandReponse, "ACCESS content old: " + printByteBinary(accessByte));
+            // setting bit 4
+            byte accessByteNew;
+            accessByteNew = unsetBitInByte(accessByte, 4);
+            writeToUiAppend(commandReponse, "ACCESS content new: " + printByteBinary(accessByteNew));
+            // rebuild the page data
+            readPageResponse[0] = accessByteNew;
+            // write the page back to the tag
+            byte[] writePageResponse = writeTagDataResponse(nfcA, 228, readPageResponse); // this is for NTAG216 only
+            writeToUiAppend(commandReponse, "write page to tag: " + bytesToHex(readPageResponse));
+            //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
+            if (writePageResponse != null) {
+                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + bytesToHex(writePageResponse));
+                return readPageResponse;
+            } else {
+                writeToUiAppend(commandReponse, "FAILURE: no writing on the tag");
+            }
+        }
+        return null;
+    }
+
+    // todo change description (it is the old one forr counter)
+    private byte[] writeEnableUidMirror(NfcA nfcA) {
+        /**
+         * WARNING: this command is hardcoded to work with a NTAG216
+         * the bit for enabling or disabling the counter is in pages 42/132/228 (0x2A / 0x84 / 0xE4)
+         * depending on the tag type
+         *
+         * byte 0 of this pages holds the ACCESS byte
+         * bit 4 is the counter enabling flag, 0 = disabled, 1 = enabled
+         *
+         * bit 3 is the counter password protection 0 = NFC counter not protected, 1 = enabled
+         * If the NFC counter password protection is enabled, the NFC tag will only respond to a
+         * READ_CNT command with the NFC counter value after a valid password verification
+         * This bit is NOT set in this command
+         */
+
+        writeToUiAppend(commandReponse, "* Start enabling the Uid mirror *");
+        // first read the page, set bit to 1 and save the page back to the tag
+        // read page 228 = Configuration page 1
+        byte[] readPageResponse = getTagDataResponse(nfcA, 228); // this is for NTAG216 only
+        if (readPageResponse != null) {
+            // get byte 0 = ACCESS byte
+            byte accessByte = readPageResponse[0];
+            writeToUiAppend(commandReponse, "ACCESS content old: " + printByteBinary(accessByte));
+            // setting bit 4
+            byte accessByteNew;
+            accessByteNew = setBitInByte(accessByte, 4);
+            writeToUiAppend(commandReponse, "ACCESS content new: " + printByteBinary(accessByteNew));
+            // rebuild the page data
+            readPageResponse[0] = accessByteNew;
+            // write the page back to the tag
+            byte[] writePageResponse = writeTagDataResponse(nfcA, 228, readPageResponse); // this is for NTAG216 only
+            writeToUiAppend(commandReponse, "write page to tag: " + bytesToHex(readPageResponse));
+            //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
+            if (writePageResponse != null) {
+                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + bytesToHex(writePageResponse));
+                return readPageResponse;
+            } else {
+                writeToUiAppend(commandReponse, "FAILURE: no writing on the tag");
+            }
+        }
+        return null;
+    }
+
+
+    // todo change description (it is the old one forr counter)
+    private byte[] writeDisableUidMirror(NfcA nfcA) {
+        /**
+         * WARNING: this command is hardcoded to work with a NTAG216
+         * the bit for enabling or disabling the uid mirror is in pages 41/131/227 (0x29 / 0x83 / 0xE3)
+         * depending on the tag type
+         *
+         * byte 0 of this pages holds the MIRROR byte
+         * byte 2 of this pages holds the MIRROR_PAGE byte
+         *
+         * bit 4 is the counter enabling flag, 0 = disabled, 1 = enabled
+         *
+         * bit 3 is the counter password protection 0 = NFC counter not protected, 1 = enabled
+         * If the NFC counter password protection is enabled, the NFC tag will only respond to a
+         * READ_CNT command with the NFC counter value after a valid password verification
+         * This bit is NOT set in this command
+         */
+
+        writeToUiAppend(commandReponse, "* Start disabling the Uid mirror *");
+        // first read the page, set bit to 0 and save the page back to the tag
+        // read page 228 = Configuration page 1
+        byte[] readPageResponse = getTagDataResponse(nfcA, 228); // this is for NTAG216 only
+        if (readPageResponse != null) {
+            // get byte 0 = ACCESS byte
+            byte accessByte = readPageResponse[0];
+            writeToUiAppend(commandReponse, "ACCESS content old: " + printByteBinary(accessByte));
+            // setting bit 4
+            byte accessByteNew;
+            accessByteNew = unsetBitInByte(accessByte, 4);
+            writeToUiAppend(commandReponse, "ACCESS content new: " + printByteBinary(accessByteNew));
+            // rebuild the page data
+            readPageResponse[0] = accessByteNew;
+            // write the page back to the tag
+            byte[] writePageResponse = writeTagDataResponse(nfcA, 228, readPageResponse); // this is for NTAG216 only
+            writeToUiAppend(commandReponse, "write page to tag: " + bytesToHex(readPageResponse));
+            //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
+            if (writePageResponse != null) {
+                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + bytesToHex(writePageResponse));
+                return readPageResponse;
+            } else {
+                writeToUiAppend(commandReponse, "FAILURE: no writing on the tag");
             }
         }
         return null;
@@ -309,7 +437,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             }
         } catch (TagLostException e) {
             // Log and return
-            writeToUiAppend(commandReponse, "ERROR: Tag lost exception");
+            writeToUiAppend(commandReponse, "ERROR: Tag lost exception on reading");
             return null;
         } catch (IOException e) {
             writeToUiAppend(commandReponse, "ERROR: IOEexception: " + e);
@@ -322,7 +450,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
     private byte[] writeTagDataResponse(NfcA nfcA, int page, byte[] dataByte) {
         byte[] response;
         byte[] command = new byte[]{
-                (byte) 0x30,  // READ
+                (byte) 0xA2,  // WRITE
                 (byte) (page & 0x0ff),
                 dataByte[0],
                 dataByte[1],
@@ -344,6 +472,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
                 // success: response contains ACK or actual data
                 writeToUiAppend(commandReponse, "SUCCESS on writing page " + page + " response: " + bytesToHex(response));
                 System.out.println("response page " + page + ": " + bytesToHex(response));
+                return response;
             }
         } catch (TagLostException e) {
             // Log and return
@@ -354,7 +483,6 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             e.printStackTrace();
             return null;
         }
-        return response;
     }
 
     private boolean writeTagData(NfcA nfcA, int page, byte[] dataByte, TextView textView,
@@ -388,7 +516,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             }
         } catch (TagLostException e) {
             // Log and return
-            writeToUiAppend(textView, "ERROR: Tag lost exception");
+            writeToUiAppend(textView, "ERROR: Tag lost exception on writing");
             return false;
         } catch (IOException e) {
             writeToUiAppend(textView, "IOException: " + e.toString());
@@ -457,6 +585,12 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             factor *= 256l;
         }
         return result + "";
+    }
+
+    private static String printByteBinary(byte bytes){
+        byte[] data = new byte[1];
+        data[0] = bytes;
+        return printByteArrayBinary(data);
     }
 
     private static String printByteArrayBinary(byte[] bytes){
