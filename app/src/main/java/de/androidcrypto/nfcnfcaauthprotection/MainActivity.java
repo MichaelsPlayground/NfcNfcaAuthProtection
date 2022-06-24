@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
     TextView nfcResult;
     Button fastRead, writeAuth, setWriteProtection, removeWriteProtection;
-    Button test, verifySignature;
+    Button test, verifySignature, specialSettings;
     private NfcAdapter mNfcAdapter;
 
     @Override
@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
         setWriteProtection = findViewById(R.id.btnMainSetWriteProtection);
         removeWriteProtection = findViewById(R.id.btnMainRemoveWriteProtection);
+        specialSettings = findViewById(R.id.btnMainSpecialSettings);
 
         test = findViewById(R.id.btnMainTest);
         verifySignature = findViewById(R.id.btnMainVerifySignature);
@@ -106,7 +107,16 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 startActivity(intent);
             }
         });
+
+        specialSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, SpecialSettingsActivity.class);
+                startActivity(intent);
+            }
+        });
     }
+
 
     // ##### TEST METHODS #####
     // position is 0 based starting from right to left

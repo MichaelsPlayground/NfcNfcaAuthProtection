@@ -177,8 +177,6 @@ public class VerifyTagSignatureActivity extends AppCompatActivity implements Nfc
         // secp224r1
 
 
-
-
     }
 
     private static Boolean ecVerifySignatureP1363(PublicKey publicKey, byte[] messageByte, byte[] signatureByte)
@@ -186,7 +184,7 @@ public class VerifyTagSignatureActivity extends AppCompatActivity implements Nfc
      Signature publicSignature = null;
      try {
          //publicSignature = Signature.getInstance("SHA256withECDSAinP1363format");
-         publicSignature = Signature.getInstance("SHA1withECDSAinP1363format");
+         publicSignature = Signature.getInstance("SHA384withECDSAinP1363format");
          publicSignature.initVerify(publicKey);
          publicSignature.update(messageByte);
          return publicSignature.verify(signatureByte);
