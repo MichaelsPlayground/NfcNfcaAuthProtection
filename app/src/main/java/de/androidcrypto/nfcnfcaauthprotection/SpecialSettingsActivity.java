@@ -22,14 +22,17 @@ import java.io.IOException;
 public class SpecialSettingsActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
 
     Button enableCounter, disableCounter;
-    Button enablueUidMirror, disableUidMirror;
+    Button enableUidMirror, disableAllMirror;
+    Button enableCounterMirror, enableUidCounterMirror;
     EditText task, commandReponse;
     private NfcAdapter mNfcAdapter;
 
     final String ENABLE_COUNTER_TASK = "enable counter";
     final String DISABLE_COUNTER_TASK = "disable counter";
     final String ENABLE_UID_MIRROR_TASK = "enable Uid mirror";
-    final String DISABLE_UID_MIRROR_TASK = "disable Uid mirror";
+    final String DISABLE_ALL_MIRROR_TASK = "disable all mirror";
+    final String ENABLE_COUNTER_MIRROR_TASK = "enable counter mirror";
+    final String ENABLE_UID_COUNTER_MIRROR_TASK = "enable Uid + counter mirror";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,9 +41,10 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
 
         enableCounter = findViewById(R.id.btnSpecialSettingEnableCounter);
         disableCounter = findViewById(R.id.btnSpecialSettingDisableCounter);
-        enablueUidMirror = findViewById(R.id.btnSpecialSettingEnableUidMirror);
-        disableUidMirror = findViewById(R.id.btnSpecialSettingDisableCounter);
-
+        enableUidMirror = findViewById(R.id.btnSpecialSettingEnableUidMirror);
+        disableAllMirror = findViewById(R.id.btnSpecialSettingDisableAllMirror);
+        enableCounterMirror = findViewById(R.id.btnSpecialSettingEnableCounterMirror);
+        enableUidCounterMirror = findViewById(R.id.btnSpecialSettingEnableUidCounterMirror);
         task = findViewById(R.id.etSpecialSettingsTask);
         commandReponse = findViewById(R.id.etSpecialSettingsResponse);
 
@@ -60,17 +64,31 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             }
         });
 
-        enablueUidMirror.setOnClickListener(new View.OnClickListener() {
+        enableUidMirror.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 task.setText(ENABLE_UID_MIRROR_TASK);
             }
         });
 
-        disableUidMirror.setOnClickListener(new View.OnClickListener() {
+        disableAllMirror.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                task.setText(DISABLE_UID_MIRROR_TASK);
+                task.setText(DISABLE_ALL_MIRROR_TASK);
+            }
+        });
+
+        enableCounterMirror.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                task.setText(ENABLE_COUNTER_MIRROR_TASK);
+            }
+        });
+
+        enableUidCounterMirror.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                task.setText(ENABLE_UID_COUNTER_MIRROR_TASK);
             }
         });
     }
@@ -171,17 +189,36 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
                             }
                             break;
                         }
-                        case DISABLE_UID_MIRROR_TASK: {
-                            response = writeDisableUidMirror(nfcA);
+                        case DISABLE_ALL_MIRROR_TASK: {
+                            response = writeDisableAllMirror(nfcA);
                             if (response == null) {
-                                writeToUiAppend(commandReponse, "Enabling the Uid mirror: FAILURE");
+                                writeToUiAppend(commandReponse, "Disabling all mirror: FAILURE");
                                 return;
                             } else {
-                                writeToUiAppend(commandReponse, "Disabling the Uid mirror: SUCCESS - code: " + bytesToHex(response));
+                                writeToUiAppend(commandReponse, "Disabling all mirror: SUCCESS - code: " + bytesToHex(response));
                             }
                             break;
                         }
-
+                        case ENABLE_COUNTER_MIRROR_TASK: {
+                            response = writeEnableCounterMirror(nfcA);
+                            if (response == null) {
+                                writeToUiAppend(commandReponse, "Enabling the counter mirror: FAILURE");
+                                return;
+                            } else {
+                                writeToUiAppend(commandReponse, "Enabling the counter mirror: SUCCESS - code: " + bytesToHex(response));
+                            }
+                            break;
+                        }
+                        case ENABLE_UID_COUNTER_MIRROR_TASK: {
+                            response = writeEnableUidCounterMirror(nfcA);
+                            if (response == null) {
+                                writeToUiAppend(commandReponse, "Ensabling the Uid + counter mirror: FAILURE");
+                                return;
+                            } else {
+                                writeToUiAppend(commandReponse, "Enabling the Uid + counter mirror: SUCCESS - code: " + bytesToHex(response));
+                            }
+                            break;
+                        }
                         default: {
                             // to task
                             writeToUiAppend(commandReponse, "choose a task by pressing the button");
@@ -322,38 +359,59 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
         return null;
     }
 
-    // todo change description (it is the old one forr counter)
     private byte[] writeEnableUidMirror(NfcA nfcA) {
         /**
          * WARNING: this command is hardcoded to work with a NTAG216
-         * the bit for enabling or disabling the counter is in pages 42/132/228 (0x2A / 0x84 / 0xE4)
+         * the bit for enabling or disabling the uid mirror is in pages 41/131/227 (0x29 / 0x83 / 0xE3)
          * depending on the tag type
          *
-         * byte 0 of this pages holds the ACCESS byte
-         * bit 4 is the counter enabling flag, 0 = disabled, 1 = enabled
+         * byte 0 of this pages holds the MIRROR byte
+         * byte 2 of this pages holds the MIRROR_PAGE byte
          *
-         * bit 3 is the counter password protection 0 = NFC counter not protected, 1 = enabled
-         * If the NFC counter password protection is enabled, the NFC tag will only respond to a
-         * READ_CNT command with the NFC counter value after a valid password verification
-         * This bit is NOT set in this command
+         * Mirror byte has these flags
+         * bits 6+7 define which mirror shall be used:
+         *   00b = no ASCII mirror
+         *   01b = Uid ASCII mirror
+         *   10b = NFC counter ASCII mirror
+         *   11b = Uid and NFC counter ASCII mirror
+         * bits 4+5 define the byte position within the page defined in MIRROR_PAGE byte
+         *
+         * MIRROR_PAGE byte defines the start of mirror.
+         *
+         * It is import that the end of mirror is within the user memory. These lengths apply:
+         * Uid mirror: 14 bytes
+         * NFC counter mirror: 6 bytes
+         * Uid + NFC counter mirror: 21 bytes (14 bytes for Uid and 1 byte separation + 6 bytes counter value
+         * Separator is x (0x78)
+         *
          */
 
         writeToUiAppend(commandReponse, "* Start enabling the Uid mirror *");
-        // first read the page, set bit to 1 and save the page back to the tag
-        // read page 228 = Configuration page 1
-        byte[] readPageResponse = getTagDataResponse(nfcA, 228); // this is for NTAG216 only
+        // read page 227 = Configuration page 0
+        byte[] readPageResponse = getTagDataResponse(nfcA, 227); // this is for NTAG216 only
         if (readPageResponse != null) {
-            // get byte 0 = ACCESS byte
-            byte accessByte = readPageResponse[0];
-            writeToUiAppend(commandReponse, "ACCESS content old: " + printByteBinary(accessByte));
-            // setting bit 4
-            byte accessByteNew;
-            accessByteNew = setBitInByte(accessByte, 4);
-            writeToUiAppend(commandReponse, "ACCESS content new: " + printByteBinary(accessByteNew));
+            // get byte 0 = MIRROR
+            byte mirrorByte = readPageResponse[0];
+            // get byte 2 = MIRROR_PAGE
+            byte mirrorPageByte = readPageResponse[2];
+            writeToUiAppend(commandReponse, "MIRROR content old: " + printByteBinary(mirrorByte));
+            // unsetting bit 7
+            byte mirrorByteNew;
+            mirrorByteNew = unsetBitInByte(mirrorByte, 7);
+            // setting bit 6
+            mirrorByteNew = setBitInByte(mirrorByteNew, 6);
+            // fix: start the mirror from byte 0 of the designated page, so both bits are set to 0
+            mirrorByteNew = unsetBitInByte(mirrorByteNew, 5);
+            mirrorByteNew = unsetBitInByte(mirrorByteNew, 4);
+            writeToUiAppend(commandReponse, "MIRROR content new: " + printByteBinary(mirrorByteNew));
+            // set the page where the mirror is starting, we use a fixed page here:
+            int setMirrorPage = 5;
+            byte mirrorPageNew = (byte) (setMirrorPage & 0x0ff);
             // rebuild the page data
-            readPageResponse[0] = accessByteNew;
+            readPageResponse[0] = mirrorByteNew;
+            readPageResponse[2] = mirrorPageNew;
             // write the page back to the tag
-            byte[] writePageResponse = writeTagDataResponse(nfcA, 228, readPageResponse); // this is for NTAG216 only
+            byte[] writePageResponse = writeTagDataResponse(nfcA, 227, readPageResponse); // this is for NTAG216 only
             writeToUiAppend(commandReponse, "write page to tag: " + bytesToHex(readPageResponse));
             //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
             if (writePageResponse != null) {
@@ -366,9 +424,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
         return null;
     }
 
-
-    // todo change description (it is the old one forr counter)
-    private byte[] writeDisableUidMirror(NfcA nfcA) {
+    private byte[] writeDisableAllMirror(NfcA nfcA) {
         /**
          * WARNING: this command is hardcoded to work with a NTAG216
          * the bit for enabling or disabling the uid mirror is in pages 41/131/227 (0x29 / 0x83 / 0xE3)
@@ -377,30 +433,179 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
          * byte 0 of this pages holds the MIRROR byte
          * byte 2 of this pages holds the MIRROR_PAGE byte
          *
-         * bit 4 is the counter enabling flag, 0 = disabled, 1 = enabled
+         * Mirror byte has these flags
+         * bits 6+7 define which mirror shall be used:
+         *   00b = no ASCII mirror
+         *   01b = Uid ASCII mirror
+         *   10b = NFC counter ASCII mirror
+         *   11b = Uid and NFC counter ASCII mirror
+         * bits 4+5 define the byte position within the page defined in MIRROR_PAGE byte
          *
-         * bit 3 is the counter password protection 0 = NFC counter not protected, 1 = enabled
-         * If the NFC counter password protection is enabled, the NFC tag will only respond to a
-         * READ_CNT command with the NFC counter value after a valid password verification
-         * This bit is NOT set in this command
+         * MIRROR_PAGE byte defines the start of mirror.
+         *
+         * It is import that the end of mirror is within the user memory. These lengths apply:
+         * Uid mirror: 14 bytes
+         * NFC counter mirror: 6 bytes
+         * Uid + NFC counter mirror: 21 bytes (14 bytes for Uid and 1 byte separation + 6 bytes counter value
+         * Separator is x (0x78)
+         *
          */
 
         writeToUiAppend(commandReponse, "* Start disabling the Uid mirror *");
-        // first read the page, set bit to 0 and save the page back to the tag
-        // read page 228 = Configuration page 1
-        byte[] readPageResponse = getTagDataResponse(nfcA, 228); // this is for NTAG216 only
+        // read page 227 = Configuration page 0
+        byte[] readPageResponse = getTagDataResponse(nfcA, 227); // this is for NTAG216 only
         if (readPageResponse != null) {
-            // get byte 0 = ACCESS byte
-            byte accessByte = readPageResponse[0];
-            writeToUiAppend(commandReponse, "ACCESS content old: " + printByteBinary(accessByte));
-            // setting bit 4
-            byte accessByteNew;
-            accessByteNew = unsetBitInByte(accessByte, 4);
-            writeToUiAppend(commandReponse, "ACCESS content new: " + printByteBinary(accessByteNew));
+            // get byte 0 = MIRROR
+            byte mirrorByte = readPageResponse[0];
+            // get byte 2 = MIRROR_PAGE
+            byte mirrorPageByte = readPageResponse[2];
+            writeToUiAppend(commandReponse, "MIRROR content old: " + printByteBinary(mirrorByte));
+            // unsetting bit 6+7
+            byte mirrorByteNew;
+            mirrorByteNew = unsetBitInByte(mirrorByte, 7);
+            mirrorByteNew = unsetBitInByte(mirrorByteNew, 6);
+            // fix: start the mirror from byte 0 of the designated page, so both bits are set to 0
+            mirrorByteNew = unsetBitInByte(mirrorByteNew, 5);
+            mirrorByteNew = unsetBitInByte(mirrorByteNew, 4);
+            writeToUiAppend(commandReponse, "MIRROR content new: " + printByteBinary(mirrorByteNew));
+            // set the page where the mirror is starting, we use a fixed page here:
+            int setMirrorPage = 0; // = disable
+            byte mirrorPageNew = (byte) (setMirrorPage & 0x0ff);
             // rebuild the page data
-            readPageResponse[0] = accessByteNew;
+            readPageResponse[0] = mirrorByteNew;
+            readPageResponse[2] = mirrorPageNew;
             // write the page back to the tag
-            byte[] writePageResponse = writeTagDataResponse(nfcA, 228, readPageResponse); // this is for NTAG216 only
+            byte[] writePageResponse = writeTagDataResponse(nfcA, 227, readPageResponse); // this is for NTAG216 only
+            writeToUiAppend(commandReponse, "write page to tag: " + bytesToHex(readPageResponse));
+            //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
+            if (writePageResponse != null) {
+                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + bytesToHex(writePageResponse));
+                return readPageResponse;
+            } else {
+                writeToUiAppend(commandReponse, "FAILURE: no writing on the tag");
+            }
+        }
+        return null;
+    }
+
+    private byte[] writeEnableCounterMirror(NfcA nfcA) {
+        /**
+         * WARNING: this command is hardcoded to work with a NTAG216
+         * the bit for enabling or disabling the uid mirror is in pages 41/131/227 (0x29 / 0x83 / 0xE3)
+         * depending on the tag type
+         *
+         * byte 0 of this pages holds the MIRROR byte
+         * byte 2 of this pages holds the MIRROR_PAGE byte
+         *
+         * Mirror byte has these flags
+         * bits 6+7 define which mirror shall be used:
+         *   00b = no ASCII mirror
+         *   01b = Uid ASCII mirror
+         *   10b = NFC counter ASCII mirror
+         *   11b = Uid and NFC counter ASCII mirror
+         * bits 4+5 define the byte position within the page defined in MIRROR_PAGE byte
+         *
+         * MIRROR_PAGE byte defines the start of mirror.
+         *
+         * It is import that the end of mirror is within the user memory. These lengths apply:
+         * Uid mirror: 14 bytes
+         * NFC counter mirror: 6 bytes
+         * Uid + NFC counter mirror: 21 bytes (14 bytes for Uid and 1 byte separation + 6 bytes counter value
+         * Separator is x (0x78)
+         *
+         */
+
+        writeToUiAppend(commandReponse, "* Start enabling the Counter mirror *");
+        // read page 227 = Configuration page 0
+        byte[] readPageResponse = getTagDataResponse(nfcA, 227); // this is for NTAG216 only
+        if (readPageResponse != null) {
+            // get byte 0 = MIRROR
+            byte mirrorByte = readPageResponse[0];
+            // get byte 2 = MIRROR_PAGE
+            byte mirrorPageByte = readPageResponse[2];
+            writeToUiAppend(commandReponse, "MIRROR content old: " + printByteBinary(mirrorByte));
+            // setting bit 7
+            byte mirrorByteNew;
+            mirrorByteNew = setBitInByte(mirrorByte, 7);
+            // unsetting bit 6
+            mirrorByteNew = unsetBitInByte(mirrorByteNew, 6);
+            // fix: start the mirror from byte 0 of the designated page, so both bits are set to 0
+            mirrorByteNew = unsetBitInByte(mirrorByteNew, 5);
+            mirrorByteNew = unsetBitInByte(mirrorByteNew, 4);
+            writeToUiAppend(commandReponse, "MIRROR content new: " + printByteBinary(mirrorByteNew));
+            // set the page where the mirror is starting, we use a fixed page here:
+            int setMirrorPage = 5;
+            byte mirrorPageNew = (byte) (setMirrorPage & 0x0ff);
+            // rebuild the page data
+            readPageResponse[0] = mirrorByteNew;
+            readPageResponse[2] = mirrorPageNew;
+            // write the page back to the tag
+            byte[] writePageResponse = writeTagDataResponse(nfcA, 227, readPageResponse); // this is for NTAG216 only
+            writeToUiAppend(commandReponse, "write page to tag: " + bytesToHex(readPageResponse));
+            //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
+            if (writePageResponse != null) {
+                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + bytesToHex(writePageResponse));
+                return readPageResponse;
+            } else {
+                writeToUiAppend(commandReponse, "FAILURE: no writing on the tag");
+            }
+        }
+        return null;
+    }
+
+    private byte[] writeEnableUidCounterMirror(NfcA nfcA) {
+        /**
+         * WARNING: this command is hardcoded to work with a NTAG216
+         * the bit for enabling or disabling the uid mirror is in pages 41/131/227 (0x29 / 0x83 / 0xE3)
+         * depending on the tag type
+         *
+         * byte 0 of this pages holds the MIRROR byte
+         * byte 2 of this pages holds the MIRROR_PAGE byte
+         *
+         * Mirror byte has these flags
+         * bits 6+7 define which mirror shall be used:
+         *   00b = no ASCII mirror
+         *   01b = Uid ASCII mirror
+         *   10b = NFC counter ASCII mirror
+         *   11b = Uid and NFC counter ASCII mirror
+         * bits 4+5 define the byte position within the page defined in MIRROR_PAGE byte
+         *
+         * MIRROR_PAGE byte defines the start of mirror.
+         *
+         * It is import that the end of mirror is within the user memory. These lengths apply:
+         * Uid mirror: 14 bytes
+         * NFC counter mirror: 6 bytes
+         * Uid + NFC counter mirror: 21 bytes (14 bytes for Uid and 1 byte separation + 6 bytes counter value
+         * Separator is x (0x78)
+         *
+         */
+
+        writeToUiAppend(commandReponse, "* Start enabling the Counter mirror *");
+        // read page 227 = Configuration page 0
+        byte[] readPageResponse = getTagDataResponse(nfcA, 227); // this is for NTAG216 only
+        if (readPageResponse != null) {
+            // get byte 0 = MIRROR
+            byte mirrorByte = readPageResponse[0];
+            // get byte 2 = MIRROR_PAGE
+            byte mirrorPageByte = readPageResponse[2];
+            writeToUiAppend(commandReponse, "MIRROR content old: " + printByteBinary(mirrorByte));
+            // setting bit 7
+            byte mirrorByteNew;
+            mirrorByteNew = setBitInByte(mirrorByte, 7);
+            // setting bit 6
+            mirrorByteNew = setBitInByte(mirrorByteNew, 6);
+            // fix: start the mirror from byte 0 of the designated page, so both bits are set to 0
+            mirrorByteNew = unsetBitInByte(mirrorByteNew, 5);
+            mirrorByteNew = unsetBitInByte(mirrorByteNew, 4);
+            writeToUiAppend(commandReponse, "MIRROR content new: " + printByteBinary(mirrorByteNew));
+            // set the page where the mirror is starting, we use a fixed page here:
+            int setMirrorPage = 5;
+            byte mirrorPageNew = (byte) (setMirrorPage & 0x0ff);
+            // rebuild the page data
+            readPageResponse[0] = mirrorByteNew;
+            readPageResponse[2] = mirrorPageNew;
+            // write the page back to the tag
+            byte[] writePageResponse = writeTagDataResponse(nfcA, 227, readPageResponse); // this is for NTAG216 only
             writeToUiAppend(commandReponse, "write page to tag: " + bytesToHex(readPageResponse));
             //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
             if (writePageResponse != null) {

@@ -85,17 +85,45 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginBottom="8dp"
-                android:text="+ Uid Mirror" />
+                android:text="+ Uid mirror" />
 
             <Button
-                android:id="@+id/btnSpecialSettingDisableUidMirror"
+                android:id="@+id/btnSpecialSettingEnableCounterMirror"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginBottom="8dp"
-                android:text="- Uid Mirror" />
+                android:text="+ counter mirror" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnSpecialSettingEnableUidCounterMirror"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="8dp"
+                android:text="+ Uid + counter mirror" />
+
+            <Button
+                android:id="@+id/btnSpecialSettingDisableAllMirror"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="8dp"
+                android:text="- all mirror" />
 
         </LinearLayout>
 
