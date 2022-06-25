@@ -140,12 +140,12 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
                 int nfcaMaxTranceiveLength = nfcA.getMaxTransceiveLength(); // important for the readFast command
                 int ntagPages = NfcIdentifyNtag.getIdentifiedNtagPages();
                 int ntagMemoryBytes = NfcIdentifyNtag.getIdentifiedNtagMemoryBytes();
-                String tagIdString = getDec(tag.getId());
+                String tagIdString = Utils.getDec(tag.getId());
                 String nfcaContent = "raw data of " + NfcIdentifyNtag.getIdentifiedNtagType() + "\n" +
                         "number of pages: " + ntagPages +
                         " total memory: " + ntagMemoryBytes +
                         " bytes\n" +
-                        "tag ID: " + bytesToHex(NfcIdentifyNtag.getIdentifiedNtagId()) + "\n" +
+                        "tag ID: " + Utils.bytesToHex(NfcIdentifyNtag.getIdentifiedNtagId()) + "\n" +
                         "tag ID: " + tagIdString + "\n";
                 nfcaContent = nfcaContent + "maxTranceiveLength: " + nfcaMaxTranceiveLength + " bytes\n";
                 // read the complete memory depending on ntag type
@@ -165,7 +165,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
                                     writeToUiAppend(commandReponse, "Enabling the counter: FAILURE");
                                     return;
                                 } else {
-                                    writeToUiAppend(commandReponse, "Enabling the counter: SUCCESS - code: " + bytesToHex(response));
+                                    writeToUiAppend(commandReponse, "Enabling the counter: SUCCESS - code: " + Utils.bytesToHex(response));
                                 }
                             break;
                         }
@@ -175,7 +175,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
                                 writeToUiAppend(commandReponse, "Disabling the counter: FAILURE");
                                 return;
                             } else {
-                                writeToUiAppend(commandReponse, "Disabling the counter: SUCCESS - code: " + bytesToHex(response));
+                                writeToUiAppend(commandReponse, "Disabling the counter: SUCCESS - code: " + Utils.bytesToHex(response));
                             }
                             break;
                         }
@@ -185,7 +185,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
                                 writeToUiAppend(commandReponse, "Enabling the Uid mirror: FAILURE");
                                 return;
                             } else {
-                                writeToUiAppend(commandReponse, "Enabling the Uid mirror: SUCCESS - code: " + bytesToHex(response));
+                                writeToUiAppend(commandReponse, "Enabling the Uid mirror: SUCCESS - code: " + Utils.bytesToHex(response));
                             }
                             break;
                         }
@@ -195,7 +195,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
                                 writeToUiAppend(commandReponse, "Disabling all mirror: FAILURE");
                                 return;
                             } else {
-                                writeToUiAppend(commandReponse, "Disabling all mirror: SUCCESS - code: " + bytesToHex(response));
+                                writeToUiAppend(commandReponse, "Disabling all mirror: SUCCESS - code: " + Utils.bytesToHex(response));
                             }
                             break;
                         }
@@ -205,7 +205,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
                                 writeToUiAppend(commandReponse, "Enabling the counter mirror: FAILURE");
                                 return;
                             } else {
-                                writeToUiAppend(commandReponse, "Enabling the counter mirror: SUCCESS - code: " + bytesToHex(response));
+                                writeToUiAppend(commandReponse, "Enabling the counter mirror: SUCCESS - code: " + Utils.bytesToHex(response));
                             }
                             break;
                         }
@@ -215,7 +215,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
                                 writeToUiAppend(commandReponse, "Enabling the Uid + counter mirror: FAILURE");
                                 return;
                             } else {
-                                writeToUiAppend(commandReponse, "Enabling the Uid + counter mirror: SUCCESS - code: " + bytesToHex(response));
+                                writeToUiAppend(commandReponse, "Enabling the Uid + counter mirror: SUCCESS - code: " + Utils.bytesToHex(response));
                             }
                             break;
                         }
@@ -239,23 +239,6 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             writeToUiAppend(commandReponse, "ERROR: IOException " + e.toString());
             e.printStackTrace();
         }
-    }
-
-    // position is 0 based starting from right to left
-    private byte setBitInByte(byte input, int pos) {
-        return (byte) (input | (1 << pos));
-    }
-
-    // position is 0 based starting from right to left
-    private byte unsetBitInByte(byte input, int pos) {
-        return (byte) (input & ~(1 << pos));
-    }
-
-
-    private void writeToUi2(TextView textView, String message) {
-        runOnUiThread(() -> {
-            textView.setText(message);
-        });
     }
 
     private void writeToUiAppend(TextView textView, String message) {
@@ -295,19 +278,19 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
         if (readPageResponse != null) {
             // get byte 0 = ACCESS byte
             byte accessByte = readPageResponse[0];
-            writeToUiAppend(commandReponse, "ACCESS content old: " + printByteBinary(accessByte));
+            writeToUiAppend(commandReponse, "ACCESS content old: " + Utils.printByteBinary(accessByte));
             // setting bit 4
             byte accessByteNew;
-            accessByteNew = setBitInByte(accessByte, 4);
-            writeToUiAppend(commandReponse, "ACCESS content new: " + printByteBinary(accessByteNew));
+            accessByteNew = Utils.setBitInByte(accessByte, 4);
+            writeToUiAppend(commandReponse, "ACCESS content new: " + Utils.printByteBinary(accessByteNew));
             // rebuild the page data
             readPageResponse[0] = accessByteNew;
             // write the page back to the tag
             byte[] writePageResponse = writeTagDataResponse(nfcA, 228, readPageResponse); // this is for NTAG216 only
-            writeToUiAppend(commandReponse, "write page to tag: " + bytesToHex(readPageResponse));
+            writeToUiAppend(commandReponse, "write page to tag: " + Utils.bytesToHex(readPageResponse));
             //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
             if (writePageResponse != null) {
-                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + bytesToHex(writePageResponse));
+                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + Utils.bytesToHex(writePageResponse));
                 return readPageResponse;
             } else {
                 writeToUiAppend(commandReponse, "FAILURE: no writing on the tag");
@@ -338,19 +321,19 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
         if (readPageResponse != null) {
             // get byte 0 = ACCESS byte
             byte accessByte = readPageResponse[0];
-            writeToUiAppend(commandReponse, "ACCESS content old: " + printByteBinary(accessByte));
+            writeToUiAppend(commandReponse, "ACCESS content old: " + Utils.printByteBinary(accessByte));
             // setting bit 4
             byte accessByteNew;
-            accessByteNew = unsetBitInByte(accessByte, 4);
-            writeToUiAppend(commandReponse, "ACCESS content new: " + printByteBinary(accessByteNew));
+            accessByteNew = Utils.unsetBitInByte(accessByte, 4);
+            writeToUiAppend(commandReponse, "ACCESS content new: " + Utils.printByteBinary(accessByteNew));
             // rebuild the page data
             readPageResponse[0] = accessByteNew;
             // write the page back to the tag
             byte[] writePageResponse = writeTagDataResponse(nfcA, 228, readPageResponse); // this is for NTAG216 only
-            writeToUiAppend(commandReponse, "write page to tag: " + bytesToHex(readPageResponse));
+            writeToUiAppend(commandReponse, "write page to tag: " + Utils.bytesToHex(readPageResponse));
             //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
             if (writePageResponse != null) {
-                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + bytesToHex(writePageResponse));
+                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + Utils.bytesToHex(writePageResponse));
                 return readPageResponse;
             } else {
                 writeToUiAppend(commandReponse, "FAILURE: no writing on the tag");
@@ -394,16 +377,16 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             byte mirrorByte = readPageResponse[0];
             // get byte 2 = MIRROR_PAGE
             byte mirrorPageByte = readPageResponse[2];
-            writeToUiAppend(commandReponse, "MIRROR content old: " + printByteBinary(mirrorByte));
+            writeToUiAppend(commandReponse, "MIRROR content old: " + Utils.printByteBinary(mirrorByte));
             // unsetting bit 7
             byte mirrorByteNew;
-            mirrorByteNew = unsetBitInByte(mirrorByte, 7);
+            mirrorByteNew = Utils.unsetBitInByte(mirrorByte, 7);
             // setting bit 6
-            mirrorByteNew = setBitInByte(mirrorByteNew, 6);
+            mirrorByteNew = Utils.setBitInByte(mirrorByteNew, 6);
             // fix: start the mirror from byte 0 of the designated page, so both bits are set to 0
-            mirrorByteNew = unsetBitInByte(mirrorByteNew, 5);
-            mirrorByteNew = unsetBitInByte(mirrorByteNew, 4);
-            writeToUiAppend(commandReponse, "MIRROR content new: " + printByteBinary(mirrorByteNew));
+            mirrorByteNew = Utils.unsetBitInByte(mirrorByteNew, 5);
+            mirrorByteNew = Utils.unsetBitInByte(mirrorByteNew, 4);
+            writeToUiAppend(commandReponse, "MIRROR content new: " + Utils.printByteBinary(mirrorByteNew));
             // set the page where the mirror is starting, we use a fixed page here:
             int setMirrorPage = 5;
             byte mirrorPageNew = (byte) (setMirrorPage & 0x0ff);
@@ -412,10 +395,10 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             readPageResponse[2] = mirrorPageNew;
             // write the page back to the tag
             byte[] writePageResponse = writeTagDataResponse(nfcA, 227, readPageResponse); // this is for NTAG216 only
-            writeToUiAppend(commandReponse, "write page to tag: " + bytesToHex(readPageResponse));
+            writeToUiAppend(commandReponse, "write page to tag: " + Utils.bytesToHex(readPageResponse));
             //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
             if (writePageResponse != null) {
-                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + bytesToHex(writePageResponse));
+                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + Utils.bytesToHex(writePageResponse));
                 return readPageResponse;
             } else {
                 writeToUiAppend(commandReponse, "FAILURE: no writing on the tag");
@@ -459,15 +442,15 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             byte mirrorByte = readPageResponse[0];
             // get byte 2 = MIRROR_PAGE
             byte mirrorPageByte = readPageResponse[2];
-            writeToUiAppend(commandReponse, "MIRROR content old: " + printByteBinary(mirrorByte));
+            writeToUiAppend(commandReponse, "MIRROR content old: " + Utils.printByteBinary(mirrorByte));
             // unsetting bit 6+7
             byte mirrorByteNew;
-            mirrorByteNew = unsetBitInByte(mirrorByte, 7);
-            mirrorByteNew = unsetBitInByte(mirrorByteNew, 6);
+            mirrorByteNew = Utils.unsetBitInByte(mirrorByte, 7);
+            mirrorByteNew = Utils.unsetBitInByte(mirrorByteNew, 6);
             // fix: start the mirror from byte 0 of the designated page, so both bits are set to 0
-            mirrorByteNew = unsetBitInByte(mirrorByteNew, 5);
-            mirrorByteNew = unsetBitInByte(mirrorByteNew, 4);
-            writeToUiAppend(commandReponse, "MIRROR content new: " + printByteBinary(mirrorByteNew));
+            mirrorByteNew = Utils.unsetBitInByte(mirrorByteNew, 5);
+            mirrorByteNew = Utils.unsetBitInByte(mirrorByteNew, 4);
+            writeToUiAppend(commandReponse, "MIRROR content new: " + Utils.printByteBinary(mirrorByteNew));
             // set the page where the mirror is starting, we use a fixed page here:
             int setMirrorPage = 0; // = disable
             byte mirrorPageNew = (byte) (setMirrorPage & 0x0ff);
@@ -476,10 +459,10 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             readPageResponse[2] = mirrorPageNew;
             // write the page back to the tag
             byte[] writePageResponse = writeTagDataResponse(nfcA, 227, readPageResponse); // this is for NTAG216 only
-            writeToUiAppend(commandReponse, "write page to tag: " + bytesToHex(readPageResponse));
+            writeToUiAppend(commandReponse, "write page to tag: " + Utils.bytesToHex(readPageResponse));
             //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
             if (writePageResponse != null) {
-                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + bytesToHex(writePageResponse));
+                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + Utils.bytesToHex(writePageResponse));
                 return readPageResponse;
             } else {
                 writeToUiAppend(commandReponse, "FAILURE: no writing on the tag");
@@ -523,16 +506,16 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             byte mirrorByte = readPageResponse[0];
             // get byte 2 = MIRROR_PAGE
             byte mirrorPageByte = readPageResponse[2];
-            writeToUiAppend(commandReponse, "MIRROR content old: " + printByteBinary(mirrorByte));
+            writeToUiAppend(commandReponse, "MIRROR content old: " + Utils.printByteBinary(mirrorByte));
             // setting bit 7
             byte mirrorByteNew;
-            mirrorByteNew = setBitInByte(mirrorByte, 7);
+            mirrorByteNew = Utils.setBitInByte(mirrorByte, 7);
             // unsetting bit 6
-            mirrorByteNew = unsetBitInByte(mirrorByteNew, 6);
+            mirrorByteNew = Utils.unsetBitInByte(mirrorByteNew, 6);
             // fix: start the mirror from byte 0 of the designated page, so both bits are set to 0
-            mirrorByteNew = unsetBitInByte(mirrorByteNew, 5);
-            mirrorByteNew = unsetBitInByte(mirrorByteNew, 4);
-            writeToUiAppend(commandReponse, "MIRROR content new: " + printByteBinary(mirrorByteNew));
+            mirrorByteNew = Utils.unsetBitInByte(mirrorByteNew, 5);
+            mirrorByteNew = Utils.unsetBitInByte(mirrorByteNew, 4);
+            writeToUiAppend(commandReponse, "MIRROR content new: " + Utils.printByteBinary(mirrorByteNew));
             // set the page where the mirror is starting, we use a fixed page here:
             int setMirrorPage = 5;
             byte mirrorPageNew = (byte) (setMirrorPage & 0x0ff);
@@ -541,10 +524,10 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             readPageResponse[2] = mirrorPageNew;
             // write the page back to the tag
             byte[] writePageResponse = writeTagDataResponse(nfcA, 227, readPageResponse); // this is for NTAG216 only
-            writeToUiAppend(commandReponse, "write page to tag: " + bytesToHex(readPageResponse));
+            writeToUiAppend(commandReponse, "write page to tag: " + Utils.bytesToHex(readPageResponse));
             //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
             if (writePageResponse != null) {
-                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + bytesToHex(writePageResponse));
+                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + Utils.bytesToHex(writePageResponse));
                 return readPageResponse;
             } else {
                 writeToUiAppend(commandReponse, "FAILURE: no writing on the tag");
@@ -588,16 +571,16 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             byte mirrorByte = readPageResponse[0];
             // get byte 2 = MIRROR_PAGE
             byte mirrorPageByte = readPageResponse[2];
-            writeToUiAppend(commandReponse, "MIRROR content old: " + printByteBinary(mirrorByte));
+            writeToUiAppend(commandReponse, "MIRROR content old: " + Utils.printByteBinary(mirrorByte));
             // setting bit 7
             byte mirrorByteNew;
-            mirrorByteNew = setBitInByte(mirrorByte, 7);
+            mirrorByteNew = Utils.setBitInByte(mirrorByte, 7);
             // setting bit 6
-            mirrorByteNew = setBitInByte(mirrorByteNew, 6);
+            mirrorByteNew = Utils.setBitInByte(mirrorByteNew, 6);
             // fix: start the mirror from byte 0 of the designated page, so both bits are set to 0
-            mirrorByteNew = unsetBitInByte(mirrorByteNew, 5);
-            mirrorByteNew = unsetBitInByte(mirrorByteNew, 4);
-            writeToUiAppend(commandReponse, "MIRROR content new: " + printByteBinary(mirrorByteNew));
+            mirrorByteNew = Utils.unsetBitInByte(mirrorByteNew, 5);
+            mirrorByteNew = Utils.unsetBitInByte(mirrorByteNew, 4);
+            writeToUiAppend(commandReponse, "MIRROR content new: " + Utils.printByteBinary(mirrorByteNew));
             // set the page where the mirror is starting, we use a fixed page here:
             int setMirrorPage = 5;
             byte mirrorPageNew = (byte) (setMirrorPage & 0x0ff);
@@ -606,10 +589,10 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             readPageResponse[2] = mirrorPageNew;
             // write the page back to the tag
             byte[] writePageResponse = writeTagDataResponse(nfcA, 227, readPageResponse); // this is for NTAG216 only
-            writeToUiAppend(commandReponse, "write page to tag: " + bytesToHex(readPageResponse));
+            writeToUiAppend(commandReponse, "write page to tag: " + Utils.bytesToHex(readPageResponse));
             //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
             if (writePageResponse != null) {
-                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + bytesToHex(writePageResponse));
+                writeToUiAppend(commandReponse, "SUCCESS: writing with response: " + Utils.bytesToHex(writePageResponse));
                 return readPageResponse;
             } else {
                 writeToUiAppend(commandReponse, "FAILURE: no writing on the tag");
@@ -637,8 +620,8 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
                 return null;
             } else {
                 // success: response contains ACK or actual data
-                writeToUiAppend(commandReponse, "SUCCESS on reading page " + page + " response: " + bytesToHex(response));
-                System.out.println("reading page " + page + ": " + bytesToHex(response));
+                writeToUiAppend(commandReponse, "SUCCESS on reading page " + page + " response: " + Utils.bytesToHex(response));
+                System.out.println("reading page " + page + ": " + Utils.bytesToHex(response));
             }
         } catch (TagLostException e) {
             // Log and return
@@ -675,8 +658,8 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
                 return null;
             } else {
                 // success: response contains ACK or actual data
-                writeToUiAppend(commandReponse, "SUCCESS on writing page " + page + " response: " + bytesToHex(response));
-                System.out.println("response page " + page + ": " + bytesToHex(response));
+                writeToUiAppend(commandReponse, "SUCCESS on writing page " + page + " response: " + Utils.bytesToHex(response));
+                System.out.println("response page " + page + ": " + Utils.bytesToHex(response));
                 return response;
             }
         } catch (TagLostException e) {
@@ -688,136 +671,6 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             e.printStackTrace();
             return null;
         }
-    }
-
-    private boolean writeTagData(NfcA nfcA, int page, byte[] dataByte, TextView textView,
-                                 byte[] response) {
-        boolean result;
-        //byte[] response;
-        byte[] command = new byte[]{
-                (byte) 0xA2,  // WRITE
-                (byte) (page & 0x0ff), // page
-                dataByte[0],
-                dataByte[1],
-                dataByte[2],
-                dataByte[3]
-        };
-        try {
-            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
-            if (response == null) {
-                // either communication to the tag was lost or a NACK was received
-                writeToUiAppend(textView, "ERROR: null response");
-                return false;
-            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
-                // NACK response according to Digital Protocol/T2TOP
-                // Log and return
-                writeToUiAppend(textView, "ERROR: NACK response: " + bytesToHex(response));
-                return false;
-            } else {
-                // success: response contains (P)ACK or actual data
-                writeToUiAppend(textView, "SUCCESS: response: " + bytesToHex(response));
-                System.out.println("write to page " + page + ": " + bytesToHex(response));
-                result = true;
-            }
-        } catch (TagLostException e) {
-            // Log and return
-            writeToUiAppend(textView, "ERROR: Tag lost exception on writing");
-            return false;
-        } catch (IOException e) {
-            writeToUiAppend(textView, "IOException: " + e.toString());
-            e.printStackTrace();
-            return false;
-        }
-        return result; // response contains the response
-    }
-
-    private boolean getTagData(NfcA nfcA, int page, TextView textView, byte[] response) {
-        boolean result;
-        //byte[] response;
-        byte[] command = new byte[]{
-                (byte) 0x30,  // READ
-                (byte) (page & 0x0ff),
-        };
-        try {
-            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
-            if (response == null) {
-                // either communication to the tag was lost or a NACK was received
-                writeToUiAppend(textView, "ERROR: null response");
-                return false;
-            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
-                // NACK response according to Digital Protocol/T2TOP
-                // Log and return
-                writeToUiAppend(textView, "ERROR: NACK response: " + bytesToHex(response));
-                return false;
-            } else {
-                // success: response contains ACK or actual data
-                writeToUiAppend(textView, "SUCCESS: response: " + bytesToHex(response));
-                System.out.println("read from page " + page + ": " + bytesToHex(response));
-                result = true;
-            }
-        } catch (TagLostException e) {
-            // Log and return
-            writeToUiAppend(textView, "ERROR: Tag lost exception");
-            return false;
-        } catch (IOException e) {
-            writeToUiAppend(textView, "IOException: " + e.toString());
-            e.printStackTrace();
-            return false;
-        }
-        return result;
-    }
-
-    public static String bytesToHex(byte[] bytes) {
-        StringBuffer result = new StringBuffer();
-        for (byte b : bytes)
-            result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
-        return result.toString();
-    }
-
-    public static String removeAllNonAlphaNumeric(String s) {
-        if (s == null) {
-            return null;
-        }
-        return s.replaceAll("[^A-Za-z0-9]", "");
-    }
-
-    private String getDec(byte[] bytes) {
-        long result = 0;
-        long factor = 1;
-        for (int i = 0; i < bytes.length; ++i) {
-            long value = bytes[i] & 0xffl;
-            result += value * factor;
-            factor *= 256l;
-        }
-        return result + "";
-    }
-
-    private static String printByteBinary(byte bytes){
-        byte[] data = new byte[1];
-        data[0] = bytes;
-        return printByteArrayBinary(data);
-    }
-
-    private static String printByteArrayBinary(byte[] bytes){
-        String output = "";
-        for (byte b1 : bytes){
-            String s1 = String.format("%8s", Integer.toBinaryString(b1 & 0xFF)).replace(' ', '0');
-            //s1 += " " + Integer.toHexString(b1);
-            //s1 += " " + b1;
-            output = output + " " + s1;
-            //System.out.println(s1);
-        }
-        return output;
-    }
-
-    public static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i + 1), 16));
-        }
-        return data;
     }
 
     @Override

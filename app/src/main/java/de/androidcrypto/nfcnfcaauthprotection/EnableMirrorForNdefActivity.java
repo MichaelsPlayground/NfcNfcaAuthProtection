@@ -76,12 +76,12 @@ public class EnableMirrorForNdefActivity extends AppCompatActivity implements Nf
                 int nfcaMaxTranceiveLength = nfcA.getMaxTransceiveLength(); // important for the readFast command
                 int ntagPages = NfcIdentifyNtag.getIdentifiedNtagPages();
                 int ntagMemoryBytes = NfcIdentifyNtag.getIdentifiedNtagMemoryBytes();
-                String tagIdString = getDec(tag.getId());
+                String tagIdString = Utils.getDec(tag.getId());
                 String nfcaContent = "raw data of " + NfcIdentifyNtag.getIdentifiedNtagType() + "\n" +
                         "number of pages: " + ntagPages +
                         " total memory: " + ntagMemoryBytes +
                         " bytes\n" +
-                        "tag ID: " + bytesToHex(NfcIdentifyNtag.getIdentifiedNtagId()) + "\n" +
+                        "tag ID: " + Utils.bytesToHex(NfcIdentifyNtag.getIdentifiedNtagId()) + "\n" +
                         "tag ID: " + tagIdString + "\n";
                 nfcaContent = nfcaContent + "maxTranceiveLength: " + nfcaMaxTranceiveLength + " bytes\n";
                 // read the complete memory depending on ntag type
@@ -96,7 +96,7 @@ public class EnableMirrorForNdefActivity extends AppCompatActivity implements Nf
                         writeToUiAppend(responseField, "Enabling the Uid + counter mirror: FAILURE");
                         return;
                     } else {
-                        writeToUiAppend(responseField, "Enabling the Uid + counter mirror: SUCCESS - code: " + bytesToHex(response));
+                        writeToUiAppend(responseField, "Enabling the Uid + counter mirror: SUCCESS - code: " + Utils.bytesToHex(response));
                     }
                 } finally {
                     try {
@@ -111,16 +111,6 @@ public class EnableMirrorForNdefActivity extends AppCompatActivity implements Nf
             writeToUiAppend(responseField, "ERROR: IOException " + e.toString());
             e.printStackTrace();
         }
-    }
-
-    // position is 0 based starting from right to left
-    private byte setBitInByte(byte input, int pos) {
-        return (byte) (input | (1 << pos));
-    }
-
-    // position is 0 based starting from right to left
-    private byte unsetBitInByte(byte input, int pos) {
-        return (byte) (input & ~(1 << pos));
     }
 
     private void writeToUiAppend(TextView textView, String message) {
@@ -175,16 +165,16 @@ public class EnableMirrorForNdefActivity extends AppCompatActivity implements Nf
             byte mirrorByte = readPageResponse[0];
             // get byte 2 = MIRROR_PAGE
             byte mirrorPageByte = readPageResponse[2];
-            writeToUiAppend(responseField, "MIRROR content old: " + printByteBinary(mirrorByte));
+            writeToUiAppend(responseField, "MIRROR content old: " + Utils.printByteBinary(mirrorByte));
             byte mirrorByteNew;
             // setting bit 7
-            mirrorByteNew = setBitInByte(mirrorByte, 7);
+            mirrorByteNew = Utils.setBitInByte(mirrorByte, 7);
             // setting bit 6
-            mirrorByteNew = setBitInByte(mirrorByteNew, 6);
+            mirrorByteNew = Utils.setBitInByte(mirrorByteNew, 6);
             // fix: start the mirror from byte 1 of the designated page, so bits are set as follows
-            mirrorByteNew = unsetBitInByte(mirrorByteNew, 5);
-            mirrorByteNew = setBitInByte(mirrorByteNew, 4);
-            writeToUiAppend(responseField, "MIRROR content new: " + printByteBinary(mirrorByteNew));
+            mirrorByteNew = Utils.unsetBitInByte(mirrorByteNew, 5);
+            mirrorByteNew = Utils.setBitInByte(mirrorByteNew, 4);
+            writeToUiAppend(responseField, "MIRROR content new: " + Utils.printByteBinary(mirrorByteNew));
             // set the page where the mirror is starting, we use a fixed page here:
             int setMirrorPage = 15; // 0x0F
             byte mirrorPageNew = (byte) (setMirrorPage & 0x0ff);
@@ -193,10 +183,10 @@ public class EnableMirrorForNdefActivity extends AppCompatActivity implements Nf
             readPageResponse[2] = mirrorPageNew;
             // write the page back to the tag
             byte[] writePageResponse = writeTagDataResponse(nfcA, 227, readPageResponse); // this is for NTAG216 only
-            writeToUiAppend(responseField, "write page to tag: " + bytesToHex(readPageResponse));
+            writeToUiAppend(responseField, "write page to tag: " + Utils.bytesToHex(readPageResponse));
             //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
             if (writePageResponse != null) {
-                writeToUiAppend(responseField, "SUCCESS: writing with response: " + bytesToHex(writePageResponse));
+                writeToUiAppend(responseField, "SUCCESS: writing with response: " + Utils.bytesToHex(writePageResponse));
                 return readPageResponse;
             } else {
                 writeToUiAppend(responseField, "FAILURE: no writing on the tag");
@@ -224,8 +214,8 @@ public class EnableMirrorForNdefActivity extends AppCompatActivity implements Nf
                 return null;
             } else {
                 // success: response contains ACK or actual data
-                writeToUiAppend(responseField, "SUCCESS on reading page " + page + " response: " + bytesToHex(response));
-                System.out.println("reading page " + page + ": " + bytesToHex(response));
+                writeToUiAppend(responseField, "SUCCESS on reading page " + page + " response: " + Utils.bytesToHex(response));
+                System.out.println("reading page " + page + ": " + Utils.bytesToHex(response));
             }
         } catch (TagLostException e) {
             // Log and return
@@ -262,8 +252,8 @@ public class EnableMirrorForNdefActivity extends AppCompatActivity implements Nf
                 return null;
             } else {
                 // success: response contains ACK or actual data
-                writeToUiAppend(responseField, "SUCCESS on writing page " + page + " response: " + bytesToHex(response));
-                System.out.println("response page " + page + ": " + bytesToHex(response));
+                writeToUiAppend(responseField, "SUCCESS on writing page " + page + " response: " + Utils.bytesToHex(response));
+                System.out.println("response page " + page + ": " + Utils.bytesToHex(response));
                 return response;
             }
         } catch (TagLostException e) {
@@ -275,42 +265,6 @@ public class EnableMirrorForNdefActivity extends AppCompatActivity implements Nf
             e.printStackTrace();
             return null;
         }
-    }
-
-    public static String bytesToHex(byte[] bytes) {
-        StringBuffer result = new StringBuffer();
-        for (byte b : bytes)
-            result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
-        return result.toString();
-    }
-
-    private String getDec(byte[] bytes) {
-        long result = 0;
-        long factor = 1;
-        for (int i = 0; i < bytes.length; ++i) {
-            long value = bytes[i] & 0xffl;
-            result += value * factor;
-            factor *= 256l;
-        }
-        return result + "";
-    }
-
-    private static String printByteBinary(byte bytes){
-        byte[] data = new byte[1];
-        data[0] = bytes;
-        return printByteArrayBinary(data);
-    }
-
-    private static String printByteArrayBinary(byte[] bytes){
-        String output = "";
-        for (byte b1 : bytes){
-            String s1 = String.format("%8s", Integer.toBinaryString(b1 & 0xFF)).replace(' ', '0');
-            //s1 += " " + Integer.toHexString(b1);
-            //s1 += " " + b1;
-            output = output + " " + s1;
-            //System.out.println(s1);
-        }
-        return output;
     }
 
     @Override

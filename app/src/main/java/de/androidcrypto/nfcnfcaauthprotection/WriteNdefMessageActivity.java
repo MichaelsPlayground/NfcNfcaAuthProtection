@@ -113,7 +113,7 @@ public class WriteNdefMessageActivity extends AppCompatActivity implements NfcAd
                     ndefRecord = NdefRecord.createUri(completeUrlString);
                     ndefMessage = new NdefMessage(ndefRecord);
                     byte[] ndefMessageByte = ndefMessage.toByteArray();
-                    writeToUiAppend(responseField, "This is the NDEF message: " + bytesToHex(ndefMessageByte));
+                    writeToUiAppend(responseField, "This is the NDEF message: " + Utils.bytesToHex(ndefMessageByte));
                     // wrap into TLV structure
                     byte[] tlvEncodedData = null;
                     if (ndefMessageByte.length < 255) {
@@ -148,11 +148,11 @@ public class WriteNdefMessageActivity extends AppCompatActivity implements NfcAd
                         } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
                             // NACK response according to Digital Protocol/T2TOP
                             // Log and return
-                            writeToUiAppend(responseField, "ERROR: NACK response: " + bytesToHex(response));
+                            writeToUiAppend(responseField, "ERROR: NACK response: " + Utils.bytesToHex(response));
                             return;
                         } else {
                             // success: response contains (P)ACK or actual data
-                            writeToUiAppend(responseField, "Writing to page: " + (4 + i) + "SUCCESS: response: " + bytesToHex(response));
+                            writeToUiAppend(responseField, "Writing to page: " + (4 + i) + "SUCCESS: response: " + Utils.bytesToHex(response));
                         }
                     }
                     writeToUiAppend(responseField, "*** End creating the NDEF message and record");
@@ -188,12 +188,6 @@ public class WriteNdefMessageActivity extends AppCompatActivity implements NfcAd
         });
     }
 
-    public static String bytesToHex(byte[] bytes) {
-        StringBuffer result = new StringBuffer();
-        for (byte b : bytes)
-            result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
-        return result.toString();
-    }
     @Override
     protected void onResume() {
         super.onResume();

@@ -1,7 +1,5 @@
 package de.androidcrypto.nfcnfcaauthprotection;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Context;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
@@ -15,8 +13,9 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 public class CommandActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
 
@@ -88,12 +87,12 @@ public class CommandActivity extends AppCompatActivity implements NfcAdapter.Rea
                 int nfcaMaxTranceiveLength = nfcA.getMaxTransceiveLength(); // important for the readFast command
                 int ntagPages = NfcIdentifyNtag.getIdentifiedNtagPages();
                 int ntagMemoryBytes = NfcIdentifyNtag.getIdentifiedNtagMemoryBytes();
-                String tagIdString = getDec(tag.getId());
+                String tagIdString = Utils.getDec(tag.getId());
                 String nfcaContent = "raw data of " + NfcIdentifyNtag.getIdentifiedNtagType() + "\n" +
                         "number of pages: " + ntagPages +
                         " total memory: " + ntagMemoryBytes +
                         " bytes\n" +
-                        "tag ID: " + bytesToHex(NfcIdentifyNtag.getIdentifiedNtagId()) + "\n" +
+                        "tag ID: " + Utils.bytesToHex(NfcIdentifyNtag.getIdentifiedNtagId()) + "\n" +
                         "tag ID: " + tagIdString + "\n";
                 nfcaContent = nfcaContent + "maxTranceiveLength: " + nfcaMaxTranceiveLength + " bytes\n";
                 // read the complete memory depending on ntag type
@@ -110,7 +109,7 @@ public class CommandActivity extends AppCompatActivity implements NfcAdapter.Rea
 
                     // get data from command1Field
                     String command1String = command1.getText().toString();
-                    byte[] command1Byte = hexStringToByteArray(command1String);
+                    byte[] command1Byte = Utils.hexStringToByteArray(command1String);
 /*
                     byte[] command = new byte[]{
 
@@ -131,11 +130,11 @@ public class CommandActivity extends AppCompatActivity implements NfcAdapter.Rea
                         } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
                             // NACK response according to Digital Protocol/T2TOP
                             // Log and return
-                            writeToUiAppend(commandReponse, "ERROR: NACK response: " + bytesToHex(response));
+                            writeToUiAppend(commandReponse, "ERROR: NACK response: " + Utils.bytesToHex(response));
                             return;
                         } else {
                             // success: response contains (P)ACK or actual data
-                            writeToUiAppend(commandReponse, "SUCCESS: response: " + bytesToHex(response));
+                            writeToUiAppend(commandReponse, "SUCCESS: response: " + Utils.bytesToHex(response));
                             //System.out.println("write to page " + page + ": " + bytesToHex(response));
 
                         }
@@ -212,12 +211,12 @@ public class CommandActivity extends AppCompatActivity implements NfcAdapter.Rea
             } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
                 // NACK response according to Digital Protocol/T2TOP
                 // Log and return
-                writeToUiAppend(textView, "ERROR: NACK response: " + bytesToHex(response));
+                writeToUiAppend(textView, "ERROR: NACK response: " + Utils.bytesToHex(response));
                 return false;
             } else {
                 // success: response contains (P)ACK or actual data
-                writeToUiAppend(textView, "SUCCESS: response: " + bytesToHex(response));
-                System.out.println("write to page " + page + ": " + bytesToHex(response));
+                writeToUiAppend(textView, "SUCCESS: response: " + Utils.bytesToHex(response));
+                System.out.println("write to page " + page + ": " + Utils.bytesToHex(response));
                 result = true;
             }
         } catch (TagLostException e) {
@@ -248,12 +247,12 @@ public class CommandActivity extends AppCompatActivity implements NfcAdapter.Rea
             } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
                 // NACK response according to Digital Protocol/T2TOP
                 // Log and return
-                writeToUiAppend(textView, "ERROR: NACK response: " + bytesToHex(response));
+                writeToUiAppend(textView, "ERROR: NACK response: " + Utils.bytesToHex(response));
                 return false;
             } else {
                 // success: response contains ACK or actual data
-                writeToUiAppend(textView, "SUCCESS: response: " + bytesToHex(response));
-                System.out.println("read from page " + page + ": " + bytesToHex(response));
+                writeToUiAppend(textView, "SUCCESS: response: " + Utils.bytesToHex(response));
+                System.out.println("read from page " + page + ": " + Utils.bytesToHex(response));
                 result = true;
             }
         } catch (TagLostException e) {
@@ -266,53 +265,6 @@ public class CommandActivity extends AppCompatActivity implements NfcAdapter.Rea
             return false;
         }
         return result;
-    }
-
-    public static String bytesToHex(byte[] bytes) {
-        StringBuffer result = new StringBuffer();
-        for (byte b : bytes)
-            result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
-        return result.toString();
-    }
-
-    public static String removeAllNonAlphaNumeric(String s) {
-        if (s == null) {
-            return null;
-        }
-        return s.replaceAll("[^A-Za-z0-9]", "");
-    }
-
-    private String getDec(byte[] bytes) {
-        long result = 0;
-        long factor = 1;
-        for (int i = 0; i < bytes.length; ++i) {
-            long value = bytes[i] & 0xffl;
-            result += value * factor;
-            factor *= 256l;
-        }
-        return result + "";
-    }
-
-    private static String printByteArrayBinary(byte[] bytes){
-        String output = "";
-        for (byte b1 : bytes){
-            String s1 = String.format("%8s", Integer.toBinaryString(b1 & 0xFF)).replace(' ', '0');
-            //s1 += " " + Integer.toHexString(b1);
-            //s1 += " " + b1;
-            output = output + " " + s1;
-            //System.out.println(s1);
-        }
-        return output;
-    }
-
-    public static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i + 1), 16));
-        }
-        return data;
     }
 
     @Override

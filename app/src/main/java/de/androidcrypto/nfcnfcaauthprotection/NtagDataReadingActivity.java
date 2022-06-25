@@ -1,7 +1,5 @@
 package de.androidcrypto.nfcnfcaauthprotection;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -18,12 +16,12 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.BackgroundColorSpan;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.BitSet;
 
 public class NtagDataReadingActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
 
@@ -104,12 +102,12 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
                 int nfcaMaxTranceiveLength = nfcA.getMaxTransceiveLength(); // important for the readFast command
                 int ntagPages = NfcIdentifyNtag.getIdentifiedNtagPages();
                 int ntagMemoryBytes = NfcIdentifyNtag.getIdentifiedNtagMemoryBytes();
-                String tagIdString = getDec(tag.getId());
+                String tagIdString = Utils.getDec(tag.getId());
                 String nfcaContent = "raw data of " + NfcIdentifyNtag.getIdentifiedNtagType() + "\n" +
                         "number of pages: " + ntagPages +
                         " total memory: " + ntagMemoryBytes +
                         " bytes\n" +
-                        "tag ID: " + bytesToHex(NfcIdentifyNtag.getIdentifiedNtagId()) + "\n" +
+                        "tag ID: " + Utils.bytesToHex(NfcIdentifyNtag.getIdentifiedNtagId()) + "\n" +
                         "tag ID: " + tagIdString + "\n";
                 nfcaContent = nfcaContent + "maxTranceiveLength: " + nfcaMaxTranceiveLength + " bytes\n";
                 // read the complete memory depending on ntag type
@@ -131,7 +129,7 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
 
                     //String s1;
                     //s1 = printByteArray(hexStringToByteArray(pageE4.getText().toString()));
-                    String s1 = printByteArrayBinary(responsePage228Byte0);
+                    String s1 = Utils.printByteArrayBinary(responsePage228Byte0);
                     //byte pageE4Byte0Byte = (byte) 129;
                     //String s1 = String.format("%8s", Integer.toBinaryString(pageE4Byte0Byte & 0xFF)).replace(' ', '0');
                     //System.out.println(s1); // 10000001
@@ -166,7 +164,7 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
                     byte[] nfcCounter = getTagCounterResponse(nfcA);
                     String nfcTagCounterString = "";
                     if (nfcCounter != null) {
-                        nfcTagCounterString = getDec(nfcCounter);
+                        nfcTagCounterString = Utils.getDec(nfcCounter);
                     } else {
                         nfcTagCounterString = "counter not enabled";
                     }
@@ -261,23 +259,23 @@ Asymmetric procedure consists of:
                 // NACK response according to Digital Protocol/T2TOP
                 // Log and return
                 runOnUiThread(() -> {
-                    resultText.setText("ERROR: NACK response: " + bytesToHex(response));
-                    pageData1.setText("response: " + bytesToHex(response));
+                    resultText.setText("ERROR: NACK response: " + Utils.bytesToHex(response));
+                    pageData1.setText("response: " + Utils.bytesToHex(response));
                     if (pageData2 != null) {
-                        pageData2.setText("response: " + bytesToHex(response));
+                        pageData2.setText("response: " + Utils.bytesToHex(response));
                     }
                     if (pageData3 != null) {
-                        pageData3.setText("response: " + bytesToHex(response));
+                        pageData3.setText("response: " + Utils.bytesToHex(response));
                     }
                     if (pageData4 != null) {
-                        pageData4.setText("response: " + bytesToHex(response));
+                        pageData4.setText("response: " + Utils.bytesToHex(response));
                     }
                 });
                 return false;
             } else {
                 // success: response contains ACK or actual data
                 runOnUiThread(() -> {
-                    resultText.setText("SUCCESS: response: " + bytesToHex(response));
+                    resultText.setText("SUCCESS: response: " + Utils.bytesToHex(response));
                     // split the response
                     byte[] res1 = new byte[4];
                     byte[] res2 = new byte[4];
@@ -287,22 +285,22 @@ Asymmetric procedure consists of:
                     System.arraycopy(response, 4, res2, 0, 4);
                     System.arraycopy(response, 8, res3, 0, 4);
                     System.arraycopy(response, 12, res4, 0, 4);
-                    pageData1.setText(bytesToHex(res1));
-                    System.out.println("page " + page + ": " + bytesToHex(res1));
+                    pageData1.setText(Utils.bytesToHex(res1));
+                    System.out.println("page " + page + ": " + Utils.bytesToHex(res1));
                     if (pageData2 != null) {
-                        pageData2.setText(bytesToHex(res2));
-                        System.out.println("page " + (page + 1) + ": " + bytesToHex(res2));
+                        pageData2.setText(Utils.bytesToHex(res2));
+                        System.out.println("page " + (page + 1) + ": " + Utils.bytesToHex(res2));
                     }
                     if (pageData3 != null) {
-                        pageData3.setText(bytesToHex(res3));
-                        System.out.println("page " + (page + 2) + ": " + bytesToHex(res3));
+                        pageData3.setText(Utils.bytesToHex(res3));
+                        System.out.println("page " + (page + 2) + ": " + Utils.bytesToHex(res3));
                     }
                     if (pageData4 != null) {
-                        pageData4.setText(bytesToHex(res4));
-                        System.out.println("page " + (page + 3) + ": " + bytesToHex(res4));
+                        pageData4.setText(Utils.bytesToHex(res4));
+                        System.out.println("page " + (page + 3) + ": " + Utils.bytesToHex(res4));
                     }
                 });
-                System.out.println("page " + page + ": " + bytesToHex(response));
+                System.out.println("page " + page + ": " + Utils.bytesToHex(response));
                 result = true;
             }
         } catch (TagLostException e) {
@@ -339,7 +337,7 @@ Asymmetric procedure consists of:
                 return null;
             } else {
                 // success: response contains ACK or actual data
-                System.out.println("page " + page + ": " + bytesToHex(response));
+                System.out.println("page " + page + ": " + Utils.bytesToHex(response));
                 result = true;
             }
         } catch (TagLostException e) {
@@ -372,7 +370,7 @@ Asymmetric procedure consists of:
                 return null;
             } else {
                 // success: response contains ACK or actual data
-                System.out.println("READ_CNT response: " + bytesToHex(response));
+                System.out.println("READ_CNT response: " + Utils.bytesToHex(response));
             }
         } catch (TagLostException e) {
             // Log and return
@@ -404,11 +402,11 @@ Asymmetric procedure consists of:
             } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
                 // NACK response according to Digital Protocol/T2TOP
                 // Log and return
-                System.out.println("*** Bad NACK response: " + bytesToHex(response));
+                System.out.println("*** Bad NACK response: " + Utils.bytesToHex(response));
                 return null;
             } else {
                 // success: response contains ACK or actual data
-                System.out.println("*** READ_SIG response: " + bytesToHex(response));
+                System.out.println("*** READ_SIG response: " + Utils.bytesToHex(response));
             }
         } catch (TagLostException e) {
             // Log and return
@@ -423,59 +421,6 @@ Asymmetric procedure consists of:
             return null;
         }
         return response;
-    }
-
-    public static String bytesToHex(byte[] bytes) {
-        StringBuffer result = new StringBuffer();
-        for (byte b : bytes) result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
-        return result.toString();
-    }
-
-    private String getDec(byte[] bytes) {
-        long result = 0;
-        long factor = 1;
-        for (int i = 0; i < bytes.length; ++i) {
-            long value = bytes[i] & 0xffl;
-            result += value * factor;
-            factor *= 256l;
-        }
-        return result + "";
-    }
-
-    public static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i + 1), 16));
-        }
-        return data;
-    }
-
-    private static String printByteArrayBinary(byte[] bytes) {
-        String output = "";
-        for (byte b1 : bytes) {
-            String s1 = String.format("%8s", Integer.toBinaryString(b1 & 0xFF)).replace(' ', '0');
-            //s1 += " " + Integer.toHexString(b1);
-            //s1 += " " + b1;
-            //output = output + " " + s1;
-            output = s1;
-            //System.out.println(s1);
-        }
-        return output;
-    }
-
-    // https://stackoverflow.com/a/29396837/8166854
-    public static boolean testBit(byte b, int n) {
-        int mask = 1 << n; // equivalent of 2 to the nth power
-        return (b & mask) != 0;
-    }
-
-    // https://stackoverflow.com/a/29396837/8166854
-    public static boolean testBit(byte[] array, int n) {
-        int index = n >>> 3; // divide by 8
-        int mask = 1 << (n & 7); // n modulo 8
-        return (array[index] & mask) != 0;
     }
 
     private void showWirelessSettings() {

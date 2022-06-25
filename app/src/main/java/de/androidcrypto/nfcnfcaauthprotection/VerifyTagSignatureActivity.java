@@ -99,14 +99,14 @@ public class VerifyTagSignatureActivity extends AppCompatActivity implements Nfc
                 // tag ID
                 tagIdByte = tag.getId();
                 runOnUiThread(() -> {
-                    tagId.setText(bytesToHex(tagIdByte));
+                    tagId.setText(Utils.bytesToHex(tagIdByte));
                 });
 
                 byte[] response = new byte[0];
 
                 try {
                     String commandString = "3c00"; // read signature
-                    byte[] commandByte = hexStringToByteArray(commandString);
+                    byte[] commandByte = Utils.hexStringToByteArray(commandString);
                     try {
                         response = nfcA.transceive(commandByte); // response should be 16 bytes = 4 pages
                         if (response == null) {
@@ -116,15 +116,15 @@ public class VerifyTagSignatureActivity extends AppCompatActivity implements Nfc
                         } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
                             // NACK response according to Digital Protocol/T2TOP
                             // Log and return
-                            writeToUiAppend(result, "ERROR: NACK response: " + bytesToHex(response));
+                            writeToUiAppend(result, "ERROR: NACK response: " + Utils.bytesToHex(response));
                             return;
                         } else {
                             // success: response contains (P)ACK or actual data
-                            writeToUiAppend(result, "SUCCESS: response: " + bytesToHex(response));
+                            writeToUiAppend(result, "SUCCESS: response: " + Utils.bytesToHex(response));
                             //System.out.println("write to page " + page + ": " + bytesToHex(response));
                             tagSignatureByte = response.clone();
                             runOnUiThread(() -> {
-                                tagSignature.setText(bytesToHex(tagSignatureByte));
+                                tagSignature.setText(Utils.bytesToHex(tagSignatureByte));
                             });
                         }
                     } catch (TagLostException e) {
@@ -156,7 +156,7 @@ public class VerifyTagSignatureActivity extends AppCompatActivity implements Nfc
 
         KeyFactory kf = null;
         PublicKey pubKey = null;
-        publicKeyByte = hexStringToByteArray(publicKeyNxp.getText().toString());
+        publicKeyByte = Utils.hexStringToByteArray(publicKeyNxp.getText().toString());
         try {
             kf = KeyFactory.getInstance("EC");
             pubKey = (PublicKey) kf.generatePublic(new X509EncodedKeySpec(publicKeyByte));
@@ -195,23 +195,6 @@ public class VerifyTagSignatureActivity extends AppCompatActivity implements Nfc
 
  }
 
-    // position is 0 based starting from right to left
-    private byte setBitInByte(byte input, int pos) {
-        return (byte) (input | (1 << pos));
-    }
-
-    // position is 0 based starting from right to left
-    private byte unsetBitInByte(byte input, int pos) {
-        return (byte) (input & ~(1 << pos));
-    }
-
-
-    private void writeToUi2(TextView textView, String message) {
-        runOnUiThread(() -> {
-            textView.setText(message);
-        });
-    }
-
     private void writeToUiAppend(TextView textView, String message) {
         runOnUiThread(() -> {
             String newString = textView.getText().toString() + "\n" + message;
@@ -240,12 +223,12 @@ public class VerifyTagSignatureActivity extends AppCompatActivity implements Nfc
             } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
                 // NACK response according to Digital Protocol/T2TOP
                 // Log and return
-                writeToUiAppend(textView, "ERROR: NACK response: " + bytesToHex(response));
+                writeToUiAppend(textView, "ERROR: NACK response: " + Utils.bytesToHex(response));
                 return false;
             } else {
                 // success: response contains (P)ACK or actual data
-                writeToUiAppend(textView, "SUCCESS: response: " + bytesToHex(response));
-                System.out.println("write to page " + page + ": " + bytesToHex(response));
+                writeToUiAppend(textView, "SUCCESS: response: " + Utils.bytesToHex(response));
+                System.out.println("write to page " + page + ": " + Utils.bytesToHex(response));
                 result = true;
             }
         } catch (TagLostException e) {
@@ -276,12 +259,12 @@ public class VerifyTagSignatureActivity extends AppCompatActivity implements Nfc
             } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
                 // NACK response according to Digital Protocol/T2TOP
                 // Log and return
-                writeToUiAppend(textView, "ERROR: NACK response: " + bytesToHex(response));
+                writeToUiAppend(textView, "ERROR: NACK response: " + Utils.bytesToHex(response));
                 return false;
             } else {
                 // success: response contains ACK or actual data
-                writeToUiAppend(textView, "SUCCESS: response: " + bytesToHex(response));
-                System.out.println("read from page " + page + ": " + bytesToHex(response));
+                writeToUiAppend(textView, "SUCCESS: response: " + Utils.bytesToHex(response));
+                System.out.println("read from page " + page + ": " + Utils.bytesToHex(response));
                 result = true;
             }
         } catch (TagLostException e) {
@@ -294,53 +277,6 @@ public class VerifyTagSignatureActivity extends AppCompatActivity implements Nfc
             return false;
         }
         return result;
-    }
-
-    public static String bytesToHex(byte[] bytes) {
-        StringBuffer result = new StringBuffer();
-        for (byte b : bytes)
-            result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
-        return result.toString();
-    }
-
-    public static String removeAllNonAlphaNumeric(String s) {
-        if (s == null) {
-            return null;
-        }
-        return s.replaceAll("[^A-Za-z0-9]", "");
-    }
-
-    private String getDec(byte[] bytes) {
-        long result = 0;
-        long factor = 1;
-        for (int i = 0; i < bytes.length; ++i) {
-            long value = bytes[i] & 0xffl;
-            result += value * factor;
-            factor *= 256l;
-        }
-        return result + "";
-    }
-
-    private static String printByteArrayBinary(byte[] bytes) {
-        String output = "";
-        for (byte b1 : bytes) {
-            String s1 = String.format("%8s", Integer.toBinaryString(b1 & 0xFF)).replace(' ', '0');
-            //s1 += " " + Integer.toHexString(b1);
-            //s1 += " " + b1;
-            output = output + " " + s1;
-            //System.out.println(s1);
-        }
-        return output;
-    }
-
-    public static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
-        byte[] data = new byte[len / 2];
-        for (int i = 0; i < len; i += 2) {
-            data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4)
-                    + Character.digit(s.charAt(i + 1), 16));
-        }
-        return data;
     }
 
     @Override

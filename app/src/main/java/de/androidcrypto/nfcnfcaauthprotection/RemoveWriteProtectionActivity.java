@@ -27,7 +27,6 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
     com.google.android.material.textfield.TextInputEditText passwordField, packField, startProtection;
 
     TextView nfcResult;
-    Button fastRead, sample2, setWriteProtection, removeWriteProtection;
     private NfcAdapter mNfcAdapter;
 
     @Override
@@ -104,12 +103,12 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
                 int nfcaMaxTranceiveLength = nfcA.getMaxTransceiveLength(); // important for the readFast command
                 int ntagPages = NfcIdentifyNtag.getIdentifiedNtagPages();
                 int ntagMemoryBytes = NfcIdentifyNtag.getIdentifiedNtagMemoryBytes();
-                String tagIdString = getDec(tag.getId());
+                String tagIdString = Utils.getDec(tag.getId());
                 String nfcaContent = "raw data of " + NfcIdentifyNtag.getIdentifiedNtagType() + "\n" +
                         "number of pages: " + ntagPages +
                         " total memory: " + ntagMemoryBytes +
                         " bytes\n" +
-                        "tag ID: " + bytesToHex(NfcIdentifyNtag.getIdentifiedNtagId()) + "\n" +
+                        "tag ID: " + Utils.bytesToHex(NfcIdentifyNtag.getIdentifiedNtagId()) + "\n" +
                         "tag ID: " + tagIdString + "\n";
                 nfcaContent = nfcaContent + "maxTranceiveLength: " + nfcaMaxTranceiveLength + " bytes\n";
                 // read the complete memory depending on ntag type
@@ -132,7 +131,7 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
                     // get data from passwordField
                     String passwordString = passwordField.getText().toString();
                     // limitation: exact 4 alphanumerical characters
-                    passwordString = removeAllNonAlphaNumeric(passwordString);
+                    passwordString = Utils.removeAllNonAlphaNumeric(passwordString);
                     if (passwordString.length() != 4) {
                         nfcaContent = nfcaContent + "Error: you need to enter exact 4 alphanumerical characters for PASSWORD" + "\n";
                         writeToUiAppend(nfcResult, nfcaContent);
@@ -140,12 +139,12 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
                     }
                     byte[] passwordByte = passwordString.getBytes(StandardCharsets.UTF_8);
                     int passwordLength = passwordByte.length;
-                    nfcaContent = nfcaContent + "Password: " + passwordString + " hex: " + bytesToHex(passwordByte) + "\n";
+                    nfcaContent = nfcaContent + "Password: " + passwordString + " hex: " + Utils.bytesToHex(passwordByte) + "\n";
 
                     // get pack from etWriteProtectionPack
                     String packString = packField.getText().toString();
                     // limitation: exact 2 alphanumerical characters
-                    packString = removeAllNonAlphaNumeric(packString);
+                    packString = Utils.removeAllNonAlphaNumeric(packString);
                     if (packString.length() != 2) {
                         nfcaContent = nfcaContent + "Error: you need to enter exact 2 alphanumerical characters for PACK" + "\n";
                         writeToUiAppend(nfcResult, nfcaContent);
@@ -153,7 +152,7 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
                     }
                     byte[] packByte = packString.getBytes(StandardCharsets.UTF_8);
                     int packLength = packByte.length;
-                    nfcaContent = nfcaContent + "Pack: " + packString + " hex: " + bytesToHex(packByte) + "\n";
+                    nfcaContent = nfcaContent + "Pack: " + packString + " hex: " + Utils.bytesToHex(packByte) + "\n";
                     // as we write a complete page we need to fill up the bytes 3 + 4 with 0x00
                     byte[] packBytePage = new byte[4];
                     System.arraycopy(packByte, 0, packBytePage, 0, 2);
@@ -184,7 +183,7 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
                         return;
                     }
                     // check that response equals to entered PACK
-                    writeToUiAppend(nfcResult, "response from PWD_AUTH: " + bytesToHex(response));
+                    writeToUiAppend(nfcResult, "response from PWD_AUTH: " + Utils.bytesToHex(response));
                     boolean packResponseAccepted = false;
                     packResponseAccepted = Arrays.equals(response, packByte);
                     if (packResponseAccepted) {
@@ -226,10 +225,10 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
                     if (!responseSuccessful) return;
                     byte[] configurationPage1 = new byte[4];
                     System.arraycopy(configurationPages, 0, configurationPage1, 0, 4);
-                    writeToUiAppend(nfcResult, "configuration page old: " + bytesToHex(configurationPage1));
+                    writeToUiAppend(nfcResult, "configuration page old: " + Utils.bytesToHex(configurationPage1));
                     // change byte 03 for AUTH0 data, this should be fixed = default FF = 255
                     configurationPage1[3] = (byte) (startProtectionPage & 0x0ff);
-                    writeToUiAppend(nfcResult, "configuration page new: " + bytesToHex(configurationPage1));
+                    writeToUiAppend(nfcResult, "configuration page new: " + Utils.bytesToHex(configurationPage1));
                     // write the page back to tag
                     responseSuccessful = writeTagData(nfcA, 227, configurationPage1, nfcResult, response);
                     if (!responseSuccessful) return;
@@ -312,12 +311,12 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
             } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
                 // NACK response according to Digital Protocol/T2TOP
                 // Log and return
-                writeToUiAppend(textView, "ERROR: NACK response: " + bytesToHex(response));
+                writeToUiAppend(textView, "ERROR: NACK response: " + Utils.bytesToHex(response));
                 return false;
             } else {
                 // success: response contains (P)ACK or actual data
-                writeToUiAppend(textView, "SUCCESS: response: " + bytesToHex(response));
-                System.out.println("pwdAuth " + bytesToHex(passwordByte) + " response: " + bytesToHex(response));
+                writeToUiAppend(textView, "SUCCESS: response: " + Utils.bytesToHex(response));
+                System.out.println("pwdAuth " + Utils.bytesToHex(passwordByte) + " response: " + Utils.bytesToHex(response));
                 result = true;
             }
         } catch (TagLostException e) {
@@ -367,12 +366,12 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
             } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
                 // NACK response according to Digital Protocol/T2TOP
                 // Log and return
-                writeToUiAppend(textView, "ERROR: NACK response: " + bytesToHex(response));
+                writeToUiAppend(textView, "ERROR: NACK response: " + Utils.bytesToHex(response));
                 return false;
             } else {
                 // success: response contains (P)ACK or actual data
-                writeToUiAppend(textView, "SUCCESS: response: " + bytesToHex(response));
-                System.out.println("write to page " + page + ": " + bytesToHex(response));
+                writeToUiAppend(textView, "SUCCESS: response: " + Utils.bytesToHex(response));
+                System.out.println("write to page " + page + ": " + Utils.bytesToHex(response));
                 result = true;
             }
         } catch (TagLostException e) {
@@ -405,7 +404,7 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
                 return null;
             } else {
                 // success: response contains ACK or actual data
-                System.out.println("page " + page + ": " + bytesToHex(response));
+                System.out.println("page " + page + ": " + Utils.bytesToHex(response));
                 result = true;
             }
         } catch (TagLostException e) {
@@ -434,12 +433,12 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
             } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
                 // NACK response according to Digital Protocol/T2TOP
                 // Log and return
-                writeToUiAppend(textView, "ERROR: NACK response: " + bytesToHex(response));
+                writeToUiAppend(textView, "ERROR: NACK response: " + Utils.bytesToHex(response));
                 return false;
             } else {
                 // success: response contains ACK or actual data
-                writeToUiAppend(textView, "SUCCESS: response: " + bytesToHex(response));
-                System.out.println("read from page " + page + ": " + bytesToHex(response));
+                writeToUiAppend(textView, "SUCCESS: response: " + Utils.bytesToHex(response));
+                System.out.println("read from page " + page + ": " + Utils.bytesToHex(response));
                 result = true;
             }
         } catch (TagLostException e) {
@@ -452,31 +451,6 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
             return false;
         }
         return result;
-    }
-
-    public static String bytesToHex(byte[] bytes) {
-        StringBuffer result = new StringBuffer();
-        for (byte b : bytes)
-            result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
-        return result.toString();
-    }
-
-    public static String removeAllNonAlphaNumeric(String s) {
-        if (s == null) {
-            return null;
-        }
-        return s.replaceAll("[^A-Za-z0-9]", "");
-    }
-
-    private String getDec(byte[] bytes) {
-        long result = 0;
-        long factor = 1;
-        for (int i = 0; i < bytes.length; ++i) {
-            long value = bytes[i] & 0xffl;
-            result += value * factor;
-            factor *= 256l;
-        }
-        return result + "";
     }
 
     private void showWirelessSettings() {
