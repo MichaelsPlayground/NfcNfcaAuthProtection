@@ -212,7 +212,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
                         case ENABLE_UID_COUNTER_MIRROR_TASK: {
                             response = writeEnableUidCounterMirror(nfcA);
                             if (response == null) {
-                                writeToUiAppend(commandReponse, "Ensabling the Uid + counter mirror: FAILURE");
+                                writeToUiAppend(commandReponse, "Enabling the Uid + counter mirror: FAILURE");
                                 return;
                             } else {
                                 writeToUiAppend(commandReponse, "Enabling the Uid + counter mirror: SUCCESS - code: " + bytesToHex(response));

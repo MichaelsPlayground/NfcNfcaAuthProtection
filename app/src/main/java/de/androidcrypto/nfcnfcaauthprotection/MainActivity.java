@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
 
     TextView nfcResult;
     Button fastRead, writeAuth, setWriteProtection, removeWriteProtection;
-    Button test, verifySignature, specialSettings;
+    Button test, verifySignature, specialSettings, writeNdefMessage, enableMirrorForNdefMessage;
     private NfcAdapter mNfcAdapter;
 
     @Override
@@ -45,6 +45,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         setWriteProtection = findViewById(R.id.btnMainSetWriteProtection);
         removeWriteProtection = findViewById(R.id.btnMainRemoveWriteProtection);
         specialSettings = findViewById(R.id.btnMainSpecialSettings);
+        writeNdefMessage = findViewById(R.id.btnMainWriteNdef);
+        enableMirrorForNdefMessage = findViewById(R.id.btnMainEnableMirrorForNdef);
 
         test = findViewById(R.id.btnMainTest);
         verifySignature = findViewById(R.id.btnMainVerifySignature);
@@ -112,6 +114,22 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, SpecialSettingsActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        writeNdefMessage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, WriteNdefMessageActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        enableMirrorForNdefMessage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, EnableMirrorForNdefActivity.class);
                 startActivity(intent);
             }
         });

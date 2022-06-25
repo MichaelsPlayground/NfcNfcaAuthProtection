@@ -1,0 +1,347 @@
+package de.androidcrypto.nfcnfcaauthprotection;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Context;
+import android.nfc.NfcAdapter;
+import android.nfc.Tag;
+import android.nfc.TagLostException;
+import android.nfc.tech.NfcA;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.io.IOException;
+
+public class EnableMirrorForNdefActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback  {
+
+    EditText responseField;
+    private NfcAdapter mNfcAdapter;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_enable_mirror_for_ndef);
+        responseField = findViewById(R.id.etetEnableMirrorForNdefResponse);
+
+        mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+    }
+
+    // This method is run in another thread when a card is discovered
+    // !!!! This method cannot cannot direct interact with the UI Thread
+    // Use `runOnUiThread` method to change the UI from this method
+    @Override
+    public void onTagDiscovered(Tag tag) {
+        // Read and or write to Tag here to the appropriate Tag Technology type class
+        // in this example the card should be an Ndef Technology Type
+
+        System.out.println("NFC tag discovered");
+
+        NfcA nfcA = null;
+
+        try {
+            nfcA = NfcA.get(tag);
+
+            if (nfcA != null) {
+                writeToUiToast("NFC tag is Nfca compatible");
+
+                // Make a Sound
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    ((Vibrator) getSystemService(VIBRATOR_SERVICE)).vibrate(VibrationEffect.createOneShot(150, 10));
+                } else {
+                    Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+                    v.vibrate(200);
+                }
+
+                runOnUiThread(() -> {
+                    responseField.setText("");
+                });
+
+                nfcA.connect();
+
+                // check that the tag is a NTAG213/215/216 manufactured by NXP - stop if not
+                String ntagVersion = NfcIdentifyNtag.checkNtagType(nfcA, tag.getId());
+                if (!ntagVersion.equals("216")) {
+                    writeToUiAppend(responseField, "NFC tag is NOT of type NXP NTAG216");
+                    writeToUiToast("NFC tag is NOT of type NXP NTAG216");
+                    return;
+                }
+
+                writeToUiAppend(responseField, "*** Start creating the NDEF message and record");
+
+                int nfcaMaxTranceiveLength = nfcA.getMaxTransceiveLength(); // important for the readFast command
+                int ntagPages = NfcIdentifyNtag.getIdentifiedNtagPages();
+                int ntagMemoryBytes = NfcIdentifyNtag.getIdentifiedNtagMemoryBytes();
+                String tagIdString = getDec(tag.getId());
+                String nfcaContent = "raw data of " + NfcIdentifyNtag.getIdentifiedNtagType() + "\n" +
+                        "number of pages: " + ntagPages +
+                        " total memory: " + ntagMemoryBytes +
+                        " bytes\n" +
+                        "tag ID: " + bytesToHex(NfcIdentifyNtag.getIdentifiedNtagId()) + "\n" +
+                        "tag ID: " + tagIdString + "\n";
+                nfcaContent = nfcaContent + "maxTranceiveLength: " + nfcaMaxTranceiveLength + " bytes\n";
+                // read the complete memory depending on ntag type
+                byte[] ntagMemory = new byte[ntagMemoryBytes];
+                // read the content of the tag in several runs
+                byte[] response = new byte[0];
+
+                try {
+
+                    response = writeEnableUidCounterMirrorNdef(nfcA);
+                    if (response == null) {
+                        writeToUiAppend(responseField, "Enabling the Uid + counter mirror: FAILURE");
+                        return;
+                    } else {
+                        writeToUiAppend(responseField, "Enabling the Uid + counter mirror: SUCCESS - code: " + bytesToHex(response));
+                    }
+                } finally {
+                    try {
+                        nfcA.close();
+                    } catch (IOException e) {
+                        writeToUiAppend(responseField, "ERROR: IOException " + e.toString());
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } catch (IOException e) {
+            writeToUiAppend(responseField, "ERROR: IOException " + e.toString());
+            e.printStackTrace();
+        }
+    }
+
+    // position is 0 based starting from right to left
+    private byte setBitInByte(byte input, int pos) {
+        return (byte) (input | (1 << pos));
+    }
+
+    // position is 0 based starting from right to left
+    private byte unsetBitInByte(byte input, int pos) {
+        return (byte) (input & ~(1 << pos));
+    }
+
+    private void writeToUiAppend(TextView textView, String message) {
+        runOnUiThread(() -> {
+            String newString = message + "\n" + textView.getText().toString();
+            textView.setText(newString);
+        });
+    }
+
+    private void writeToUiToast(String message) {
+        runOnUiThread(() -> {
+            Toast.makeText(getApplicationContext(),
+                    message,
+                    Toast.LENGTH_SHORT).show();
+        });
+    }
+
+    private byte[] writeEnableUidCounterMirrorNdef(NfcA nfcA) {
+        /**
+         * WARNING: this command is hardcoded to work with a NTAG216
+         * the bit for enabling or disabling the uid mirror is in pages 41/131/227 (0x29 / 0x83 / 0xE3)
+         * depending on the tag type
+         *
+         * byte 0 of this pages holds the MIRROR byte
+         * byte 2 of this pages holds the MIRROR_PAGE byte
+         *
+         * Mirror byte has these flags
+         * bits 6+7 define which mirror shall be used:
+         *   00b = no ASCII mirror
+         *   01b = Uid ASCII mirror
+         *   10b = NFC counter ASCII mirror
+         *   11b = Uid and NFC counter ASCII mirror
+         * bits 4+5 define the byte position within the page defined in MIRROR_PAGE byte
+         *
+         * MIRROR_PAGE byte defines the start of mirror.
+         *
+         * It is import that the end of mirror is within the user memory. These lengths apply:
+         * Uid mirror: 14 bytes
+         * NFC counter mirror: 6 bytes
+         * Uid + NFC counter mirror: 21 bytes (14 bytes for Uid and 1 byte separation + 6 bytes counter value
+         * Separator is x (0x78)
+         *
+         * This function writes the MIRROR_PAGE and MIRROR_BYTE to the place where the WRITE NDEF MESSAGE needs it
+         *
+         */
+
+        writeToUiAppend(responseField, "* Start enabling the Counter mirror *");
+        // read page 227 = Configuration page 0
+        byte[] readPageResponse = getTagDataResponse(nfcA, 227); // this is for NTAG216 only
+        if (readPageResponse != null) {
+            // get byte 0 = MIRROR
+            byte mirrorByte = readPageResponse[0];
+            // get byte 2 = MIRROR_PAGE
+            byte mirrorPageByte = readPageResponse[2];
+            writeToUiAppend(responseField, "MIRROR content old: " + printByteBinary(mirrorByte));
+            byte mirrorByteNew;
+            // setting bit 7
+            mirrorByteNew = setBitInByte(mirrorByte, 7);
+            // setting bit 6
+            mirrorByteNew = setBitInByte(mirrorByteNew, 6);
+            // fix: start the mirror from byte 1 of the designated page, so bits are set as follows
+            mirrorByteNew = unsetBitInByte(mirrorByteNew, 5);
+            mirrorByteNew = setBitInByte(mirrorByteNew, 4);
+            writeToUiAppend(responseField, "MIRROR content new: " + printByteBinary(mirrorByteNew));
+            // set the page where the mirror is starting, we use a fixed page here:
+            int setMirrorPage = 15; // 0x0F
+            byte mirrorPageNew = (byte) (setMirrorPage & 0x0ff);
+            // rebuild the page data
+            readPageResponse[0] = mirrorByteNew;
+            readPageResponse[2] = mirrorPageNew;
+            // write the page back to the tag
+            byte[] writePageResponse = writeTagDataResponse(nfcA, 227, readPageResponse); // this is for NTAG216 only
+            writeToUiAppend(responseField, "write page to tag: " + bytesToHex(readPageResponse));
+            //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
+            if (writePageResponse != null) {
+                writeToUiAppend(responseField, "SUCCESS: writing with response: " + bytesToHex(writePageResponse));
+                return readPageResponse;
+            } else {
+                writeToUiAppend(responseField, "FAILURE: no writing on the tag");
+            }
+        }
+        return null;
+    }
+
+    private byte[] getTagDataResponse(NfcA nfcA, int page) {
+        byte[] response;
+        byte[] command = new byte[]{
+                (byte) 0x30,  // READ
+                (byte) (page & 0x0ff), // page 0
+        };
+        try {
+            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
+            if (response == null) {
+                // either communication to the tag was lost or a NACK was received
+                writeToUiAppend(responseField, "Error on reading page " + page);
+                return null;
+            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
+                // NACK response according to Digital Protocol/T2TOP
+                // Log and return
+                writeToUiAppend(responseField, "Error (NACK) on reading page " + page);
+                return null;
+            } else {
+                // success: response contains ACK or actual data
+                writeToUiAppend(responseField, "SUCCESS on reading page " + page + " response: " + bytesToHex(response));
+                System.out.println("reading page " + page + ": " + bytesToHex(response));
+            }
+        } catch (TagLostException e) {
+            // Log and return
+            writeToUiAppend(responseField, "ERROR: Tag lost exception on reading");
+            return null;
+        } catch (IOException e) {
+            writeToUiAppend(responseField, "ERROR: IOEexception: " + e);
+            e.printStackTrace();
+            return null;
+        }
+        return response;
+    }
+
+    private byte[] writeTagDataResponse(NfcA nfcA, int page, byte[] dataByte) {
+        byte[] response;
+        byte[] command = new byte[]{
+                (byte) 0xA2,  // WRITE
+                (byte) (page & 0x0ff),
+                dataByte[0],
+                dataByte[1],
+                dataByte[2],
+                dataByte[3]
+        };
+        try {
+            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
+            if (response == null) {
+                // either communication to the tag was lost or a NACK was received
+                writeToUiAppend(responseField, "Error on writing page " + page);
+                return null;
+            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
+                // NACK response according to Digital Protocol/T2TOP
+                // Log and return
+                writeToUiAppend(responseField, "Error (NACK) on writing page " + page);
+                return null;
+            } else {
+                // success: response contains ACK or actual data
+                writeToUiAppend(responseField, "SUCCESS on writing page " + page + " response: " + bytesToHex(response));
+                System.out.println("response page " + page + ": " + bytesToHex(response));
+                return response;
+            }
+        } catch (TagLostException e) {
+            // Log and return
+            writeToUiAppend(responseField, "ERROR: Tag lost exception");
+            return null;
+        } catch (IOException e) {
+            writeToUiAppend(responseField, "ERROR: IOEexception: " + e);
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static String bytesToHex(byte[] bytes) {
+        StringBuffer result = new StringBuffer();
+        for (byte b : bytes)
+            result.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
+        return result.toString();
+    }
+
+    private String getDec(byte[] bytes) {
+        long result = 0;
+        long factor = 1;
+        for (int i = 0; i < bytes.length; ++i) {
+            long value = bytes[i] & 0xffl;
+            result += value * factor;
+            factor *= 256l;
+        }
+        return result + "";
+    }
+
+    private static String printByteBinary(byte bytes){
+        byte[] data = new byte[1];
+        data[0] = bytes;
+        return printByteArrayBinary(data);
+    }
+
+    private static String printByteArrayBinary(byte[] bytes){
+        String output = "";
+        for (byte b1 : bytes){
+            String s1 = String.format("%8s", Integer.toBinaryString(b1 & 0xFF)).replace(' ', '0');
+            //s1 += " " + Integer.toHexString(b1);
+            //s1 += " " + b1;
+            output = output + " " + s1;
+            //System.out.println(s1);
+        }
+        return output;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (mNfcAdapter != null) {
+
+            Bundle options = new Bundle();
+            // Work around for some broken Nfc firmware implementations that poll the card too fast
+            options.putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 250);
+
+            // Enable ReaderMode for all types of card and disable platform sounds
+            // the option NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK is NOT set
+            // to get the data of the tag afer reading
+            mNfcAdapter.enableReaderMode(this,
+                    this,
+                    NfcAdapter.FLAG_READER_NFC_A |
+                            NfcAdapter.FLAG_READER_NFC_B |
+                            NfcAdapter.FLAG_READER_NFC_F |
+                            NfcAdapter.FLAG_READER_NFC_V |
+                            NfcAdapter.FLAG_READER_NFC_BARCODE |
+                            NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS,
+                    options);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mNfcAdapter != null)
+            mNfcAdapter.disableReaderMode(this);
+    }
+}
