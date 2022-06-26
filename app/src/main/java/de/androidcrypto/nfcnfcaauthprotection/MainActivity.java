@@ -56,7 +56,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         test = findViewById(R.id.btnMainTest);
         verifySignature = findViewById(R.id.btnMainVerifySignature);
 
-        mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        // todo mNfcAdapter is disabled - remove the complete context
+        // mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
 
         fastRead.setOnClickListener(new View.OnClickListener() {
             @Override
