@@ -6,6 +6,11 @@
     <!-- https://fonts.google.com/icons?selected=Material+Icons -->
 
     <item
+        android:id="@+id/action_write_authentication"
+        android:title="write with authentication"
+        app:showAsAction="never"/>
+
+    <item
         android:id="@+id/action_export_mail"
         android:icon="@drawable/ic_outline_attach_email_24"
         android:title="Export Mail"
@@ -38,7 +43,7 @@
         app:showAsAction="never"/>
 
     <item
-        android:id="@+id/action_enable_ndef_message_mirrir"
+        android:id="@+id/action_enable_ndef_message_mirror"
         android:title="enable mirror for NDEF message"
         app:showAsAction="never"/>
 

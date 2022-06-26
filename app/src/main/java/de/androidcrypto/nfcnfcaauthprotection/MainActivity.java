@@ -30,8 +30,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
     com.google.android.material.textfield.TextInputEditText inputField;
 
     TextView nfcResult;
-    Button fastRead, writeAuth, setWriteProtection, removeWriteProtection;
-    Button test, verifySignature, specialSettings, writeNdefMessage, enableMirrorForNdefMessage;
+    Button fastRead;//, writeAuth, setWriteProtection, removeWriteProtection;
+    Button test, verifySignature;//, specialSettings, writeNdefMessage, enableMirrorForNdefMessage;
     private NfcAdapter mNfcAdapter;
 
     @Override
@@ -45,13 +45,13 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         inputFieldDecoration = findViewById(R.id.etMainInputFieldDecoration);
         nfcResult = findViewById(R.id.tvMainNfcaResult);
         fastRead = findViewById(R.id.btnMainFastRead);
-        writeAuth = findViewById(R.id.btnMainWriteAuth);
+        //writeAuth = findViewById(R.id.btnMainWriteAuth);
 
         //setWriteProtection = findViewById(R.id.btnMainSetWriteProtection);
         //removeWriteProtection = findViewById(R.id.btnMainRemoveWriteProtection);
-        specialSettings = findViewById(R.id.btnMainSpecialSettings);
-        writeNdefMessage = findViewById(R.id.btnMainWriteNdef);
-        enableMirrorForNdefMessage = findViewById(R.id.btnMainEnableMirrorForNdef);
+        //specialSettings = findViewById(R.id.btnMainSpecialSettings);
+        //writeNdefMessage = findViewById(R.id.btnMainWriteNdef);
+        //enableMirrorForNdefMessage = findViewById(R.id.btnMainEnableMirrorForNdef);
 
         test = findViewById(R.id.btnMainTest);
         verifySignature = findViewById(R.id.btnMainVerifySignature);
@@ -65,14 +65,14 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 startActivity(intent);
             }
         });
-
+/*
         writeAuth.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(MainActivity.this, WriteAuthActivity.class);
                 startActivity(intent);
             }
-        });
+        });*/
 /*
         setWriteProtection.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 startActivity(intent);
             }
         });
-
+/*
         specialSettings.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -138,6 +138,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 startActivity(intent);
             }
         });
+
+ */
     }
 
 
@@ -475,6 +477,16 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_activity_main, menu);
 
+        MenuItem mWriteAuthentication = menu.findItem(R.id.action_write_authentication);
+        mWriteAuthentication.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, WriteAuthActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
         MenuItem mWriteProtection = menu.findItem(R.id.action_write_protection);
         mWriteProtection.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
@@ -490,6 +502,36 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 Intent i = new Intent(MainActivity.this, RemoveWriteProtectionActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mSpecialSettings = menu.findItem(R.id.action_special_settings);
+        mSpecialSettings.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, SpecialSettingsActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mWriteNdef = menu.findItem(R.id.action_write_ndef_message);
+        mWriteNdef.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, WriteNdefMessageActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mEnableMirrorNdefMessage = menu.findItem(R.id.action_enable_ndef_message_mirror);
+        mEnableMirrorNdefMessage.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, EnableMirrorForNdefActivity.class);
                 startActivity(i);
                 return false;
             }
