@@ -150,7 +150,7 @@ public class WriteAuthActivity extends AppCompatActivity implements NfcAdapter.R
                     responseSuccessful = sendPwdAuthData(nfcA, passwordByte, nfcResult, response);
                     if (!responseSuccessful) return;
                     // todo check response for PACK to proceed
-
+                    System.out.println("*** authentication success, response: " + Utils.bytesToHex(response));
 
                     // get data from InputField
                     String dataString = inputField.getText().toString();
@@ -358,8 +358,7 @@ public class WriteAuthActivity extends AppCompatActivity implements NfcAdapter.R
 
     }
 
-    private boolean sendPwdAuthData(NfcA nfcA, byte[] passwordByte, TextView textView,
-                                 byte[] response) {
+    private boolean sendPwdAuthData(NfcA nfcA, byte[] passwordByte, TextView textView,                                  byte[] response) {
         boolean result;
         //byte[] response;
         byte[] command = new byte[]{
