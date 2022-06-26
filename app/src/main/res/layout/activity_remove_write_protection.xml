@@ -26,7 +26,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="10dp"
-            android:text="WARNING: When a tag is discovered the password is set to (default) FF FF FF FF, the PACK is FF FF and the Start Protection is set to FF. These defaults are written on the tag without further notice.\nDO NOT USE THIS WITH NTAGs NEEDED IN REAL APPLICATIONS OR NDEF."
+            android:text="WARNING: When a tag is discovered the password is set to (default) FF FF FF FF, the PACK is 00 00 and the Start Protection Page is set to FF. These defaults are written on the tag without further notice.\nDO NOT USE THIS WITH NTAGs NEEDED IN REAL APPLICATIONS OR NDEF."
             android:textAlignment="center"
             android:textSize="16sp"
             android:textStyle="bold" />

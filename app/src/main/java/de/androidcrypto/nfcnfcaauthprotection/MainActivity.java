@@ -1,6 +1,7 @@
 package de.androidcrypto.nfcnfcaauthprotection;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import android.content.Context;
 import android.content.Intent;
@@ -13,6 +14,8 @@ import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -35,6 +38,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.main_toolbar);
+        setSupportActionBar(myToolbar);
 
         inputField = findViewById(R.id.etMainInputField);
         inputFieldDecoration = findViewById(R.id.etMainInputFieldDecoration);
@@ -42,8 +47,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         fastRead = findViewById(R.id.btnMainFastRead);
         writeAuth = findViewById(R.id.btnMainWriteAuth);
 
-        setWriteProtection = findViewById(R.id.btnMainSetWriteProtection);
-        removeWriteProtection = findViewById(R.id.btnMainRemoveWriteProtection);
+        //setWriteProtection = findViewById(R.id.btnMainSetWriteProtection);
+        //removeWriteProtection = findViewById(R.id.btnMainRemoveWriteProtection);
         specialSettings = findViewById(R.id.btnMainSpecialSettings);
         writeNdefMessage = findViewById(R.id.btnMainWriteNdef);
         enableMirrorForNdefMessage = findViewById(R.id.btnMainEnableMirrorForNdef);
@@ -68,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 startActivity(intent);
             }
         });
-
+/*
         setWriteProtection.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -84,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 startActivity(intent);
             }
         });
-
+*/
         test.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -464,6 +469,54 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         Toast.makeText(this, "You need to enable NFC", Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
         startActivity(intent);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_activity_main, menu);
+
+        MenuItem mWriteProtection = menu.findItem(R.id.action_write_protection);
+        mWriteProtection.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, SetWriteProtectionActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mRemoveProtection = menu.findItem(R.id.action_remove_protection);
+        mRemoveProtection.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivity.this, RemoveWriteProtectionActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mExportMail = menu.findItem(R.id.action_export_mail);
+        mExportMail.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                //Intent i = new Intent(MainActivity.this, AddEntryActivity.class);
+                //startActivity(i);
+                //exportDumpMail();
+                return false;
+            }
+        });
+
+        MenuItem mExportFile = menu.findItem(R.id.action_export_file);
+        mExportFile.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                //Intent i = new Intent(MainActivity.this, AddEntryActivity.class);
+                //startActivity(i);
+                //exportDumpFile();
+                return false;
+            }
+        });
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override

@@ -124,9 +124,9 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
                     // protectionStartingPage = 4
 
                     // default values for unprotected tag
-                    // password: 1234 = xFF xFF xFF xFF
-                    // pack: oK = xFF xFF
-                    // protectionStartingPage = 255
+                    // password: none = xFF xFF xFF xFF
+                    // pack: none = x00 x00
+                    // protectionStartingPage = xFF (255)
 
                     // get data from passwordField
                     String passwordString = passwordField.getText().toString();
@@ -210,8 +210,8 @@ public class RemoveWriteProtectionActivity extends AppCompatActivity implements 
                     //responseSuccessful = writeTagData(nfcA, 05, packBytePage, nfcResult, response);
                     // this is the default value
                     byte[] packByteDefault = new byte[]{
-                            (byte) (255 & 0x0ff),
-                            (byte) (255 & 0x0ff),
+                            (byte) (0 & 0x0ff),
+                            (byte) (0 & 0x0ff),
                             (byte) (0 & 0x0ff),
                             (byte) (0 & 0x0ff)
                     };

@@ -3,11 +3,14 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="app/src/main/res/drawable/ic_outline_attach_email_24.xml" value="0.166" />
         <entry key="app/src/main/res/layout/activity_command.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_enable_mirror_for_ndef.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_fast_read.xml" value="0.14842958459979735" />
         <entry key="app/src/main/res/layout/activity_fast_read_auth.xml" value="0.1" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.19091751621872105" />
+        <entry key="app/src/main/res/layout/activity_main_org.xml" value="0.15677083333333333" />
+        <entry key="app/src/main/res/layout/activity_main_v2.xml" value="0.2803442028985507" />
         <entry key="app/src/main/res/layout/activity_ntag_data_reading.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_ntag_data_reading_v2.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_remove_write_protection.xml" value="0.1398148148148148" />
@@ -17,6 +20,7 @@
         <entry key="app/src/main/res/layout/activity_verify_tag_signature.xml" value="0.14842958459979735" />
         <entry key="app/src/main/res/layout/activity_write_auth.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_write_ndef_message.xml" value="0.13333333333333333" />
+        <entry key="app/src/main/res/menu/menu_activity_main.xml" value="0.15677083333333333" />
       </map>
     </option>
   </component>
