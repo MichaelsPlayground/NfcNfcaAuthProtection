@@ -18,7 +18,9 @@
         <entry key="app/src/main/res/layout/activity_set_write_protection_v1.xml" value="0.1398148148148148" />
         <entry key="app/src/main/res/layout/activity_special_settings.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_verify_tag_signature.xml" value="0.14842958459979735" />
+        <entry key="app/src/main/res/layout/activity_write.xml" value="0.2803442028985507" />
         <entry key="app/src/main/res/layout/activity_write_auth.xml" value="0.15526849037487336" />
+        <entry key="app/src/main/res/layout/activity_write_auth_org.xml" value="0.15677083333333333" />
         <entry key="app/src/main/res/layout/activity_write_ndef_message.xml" value="0.13333333333333333" />
         <entry key="app/src/main/res/menu/menu_activity_main.xml" value="0.15677083333333333" />
       </map>

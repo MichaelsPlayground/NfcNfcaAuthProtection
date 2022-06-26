@@ -6,6 +6,11 @@
     <!-- https://fonts.google.com/icons?selected=Material+Icons -->
 
     <item
+        android:id="@+id/action_write"
+        android:title="write on tag"
+        app:showAsAction="never"/>
+
+    <item
         android:id="@+id/action_write_authentication"
         android:title="write with authentication"
         app:showAsAction="never"/>

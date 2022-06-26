@@ -32,6 +32,9 @@
             android:name=".CommandActivity"
             android:exported="false" />
         <activity
+            android:name=".WriteActivity"
+            android:exported="false" />
+        <activity
             android:name=".WriteAuthActivity"
             android:exported="false" />
         <activity
