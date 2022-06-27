@@ -4,6 +4,7 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="app/src/main/res/drawable/ic_outline_attach_email_24.xml" value="0.166" />
+        <entry key="app/src/main/res/drawable/share_rounded_corner_with_border_error.xml" value="0.193" />
         <entry key="app/src/main/res/layout/activity_command.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_enable_mirror_for_ndef.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_fast_read.xml" value="0.14842958459979735" />
@@ -12,8 +13,10 @@
         <entry key="app/src/main/res/layout/activity_main_org.xml" value="0.15677083333333333" />
         <entry key="app/src/main/res/layout/activity_main_v2.xml" value="0.2803442028985507" />
         <entry key="app/src/main/res/layout/activity_main_v3.xml" value="0.15526849037487336" />
+        <entry key="app/src/main/res/layout/activity_main_v4.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_ntag_data_reading.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_ntag_data_reading_v2.xml" value="0.15526849037487336" />
+        <entry key="app/src/main/res/layout/activity_ntag_data_reading_v3.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_remove_write_protection.xml" value="0.1398148148148148" />
         <entry key="app/src/main/res/layout/activity_set_write_protection.xml" value="0.14842958459979735" />
         <entry key="app/src/main/res/layout/activity_set_write_protection_v1.xml" value="0.1398148148148148" />

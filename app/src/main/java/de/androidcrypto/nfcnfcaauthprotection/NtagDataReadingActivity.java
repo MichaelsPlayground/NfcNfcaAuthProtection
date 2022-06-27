@@ -15,26 +15,41 @@ import android.provider.Settings;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.BackgroundColorSpan;
+import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 public class NtagDataReadingActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
 
     EditText page00, page01, page02, page03, page04, page05, pageE2, pageE3, pageE4, pageE5, pageE6;
     EditText pageE4Byte0, counterField, signatureField;
-
     EditText readResult;
+    com.google.android.material.textfield.TextInputLayout passwordDecoration, packDecoration;
+    com.google.android.material.textfield.TextInputEditText passwordField, packField;
+    com.google.android.material.switchmaterial.SwitchMaterial authenticationSwitch;
     private NfcAdapter mNfcAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ntag_data_reading);
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.main_toolbar);
+        setSupportActionBar(myToolbar);
+
+        authenticationSwitch = findViewById(R.id.swReadAuth);
+        passwordField = findViewById(R.id.etReadAuthPassword);
+        passwordDecoration = findViewById(R.id.etReadAuthPasswordDecoration);
+        packField = findViewById(R.id.etReadAuthPack);
+        packDecoration = findViewById(R.id.etReadAuthPackDecoration);
         page00 = findViewById(R.id.etNtagRead00);
         page01 = findViewById(R.id.etNtagRead01);
         page02 = findViewById(R.id.etNtagRead02);
@@ -52,6 +67,19 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
         readResult = findViewById(R.id.etNtagReadResult);
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+
+        authenticationSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b) {
+                    passwordDecoration.setVisibility(View.VISIBLE);
+                    packDecoration.setVisibility(View.VISIBLE);
+                } else {
+                    passwordDecoration.setVisibility(View.GONE);
+                    packDecoration.setVisibility(View.GONE);
+                }
+            }
+        });
     }
 
     // This method is run in another thread when a card is discovered
@@ -114,6 +142,69 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
                 byte[] ntagMemory = new byte[ntagMemoryBytes];
                 // read the content of the tag in several runs
                 try {
+
+                    // do we want to write with or without authentication ?
+                    boolean readWithAuthentication = authenticationSwitch.isChecked();
+                    if (readWithAuthentication) {
+                        // get data from passwordField
+                        String passwordString = passwordField.getText().toString();
+                        // limitation: exact 4 alphanumerical characters
+                        passwordString = Utils.removeAllNonAlphaNumeric(passwordString);
+                        if (passwordString.length() != 4) {
+                            nfcaContent = nfcaContent + "Error: you need to enter exact 4 alphanumerical characters for PASSWORD" + "\n";
+                            writeToUiAppend(readResult, nfcaContent);
+                            return;
+                        }
+                        byte[] passwordByte = passwordString.getBytes(StandardCharsets.UTF_8);
+                        int passwordLength = passwordByte.length;
+                        nfcaContent = nfcaContent + "Password: " + passwordString + " hex: " + Utils.bytesToHex(passwordByte) + "\n";
+
+                        // get pack from etWriteProtectionPack
+                        String packString = packField.getText().toString();
+                        // limitation: exact 2 alphanumerical characters
+                        packString = Utils.removeAllNonAlphaNumeric(packString);
+                        if (packString.length() != 2) {
+                            nfcaContent = nfcaContent + "Error: you need to enter exact 2 alphanumerical characters for PACK" + "\n";
+                            writeToUiAppend(readResult, nfcaContent);
+                            return;
+                        }
+                        byte[] packByte = packString.getBytes(StandardCharsets.UTF_8);
+                        int packLength = packByte.length;
+                        nfcaContent = nfcaContent + "Pack: " + packString + " hex: " + Utils.bytesToHex(packByte) + "\n";
+                        // as we write a complete page we need to fill up the bytes 3 + 4 with 0x00
+                        byte[] packBytePage = new byte[4];
+                        System.arraycopy(packByte, 0, packBytePage, 0, 2);
+
+                        // send the pwdAuth command
+                        byte[] response;
+                        // this is the default value
+                        byte[] passwordByteDefault = new byte[]{
+                                (byte) (255 & 0x0ff),
+                                (byte) (255 & 0x0ff),
+                                (byte) (255 & 0x0ff),
+                                (byte) (255 & 0x0ff)
+                        };
+                        //passwordByte = passwordByteDefault.clone();
+                        writeToUiAppend(readResult, "*** start authentication");
+                        response = sendPwdAuthData(nfcA, passwordByte, readResult);
+                        if (response == null) {
+                            writeToUiAppend(readResult, "authentication FAILURE. Maybe wrong password or the tag is not write protected");
+                            writeToUiToast("authentication FAILURE. Maybe wrong password or the tag is not write protected");
+                            return;
+                        }
+                        byte[] packResponse = response.clone();
+                        if (Arrays.equals(packResponse, packByte)) {
+                            writeToUiAppend(readResult, "The entered PACK is correct");
+                        } else {
+                            writeToUiAppend(readResult, "entered PACK: " + Utils.bytesToHex(packByte));
+                            writeToUiAppend(readResult, "Respons PACK: " + Utils.bytesToHex(packResponse));
+                            writeToUiAppend(readResult, "The entered PACK is NOT correct, abort");
+                            writeToUiToast("The entered PACK is NOT correct, abort");
+                            return;
+                        }
+
+                    } // writeWithAuthentication
+
                     boolean responseSuccessful;
                     responseSuccessful = getTagData(nfcA, 00, page00, page01, page02, page03, readResult);
                     if (!responseSuccessful) return;
@@ -385,6 +476,42 @@ Asymmetric procedure consists of:
         return response;
     }
 
+    private byte[] sendPwdAuthData(NfcA nfcA, byte[] passwordByte, TextView textView) {
+        byte[] response; // the response is the PACK returned by the tag when successful authentication
+        byte[] command = new byte[]{
+                (byte) 0x1B,  // PWD_AUTH
+                passwordByte[0],
+                passwordByte[1],
+                passwordByte[2],
+                passwordByte[3]
+        };
+        try {
+            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
+            if (response == null) {
+                // either communication to the tag was lost or a NACK was received
+                writeToUiAppend(textView, "ERROR: null response");
+                return null;
+            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
+                // NACK response according to Digital Protocol/T2TOP
+                // Log and return
+                writeToUiAppend(textView, "ERROR: NACK response: " + Utils.bytesToHex(response));
+                return null;
+            } else {
+                // success: response contains (P)ACK or actual data
+                writeToUiAppend(textView, "SUCCESS: response: " + Utils.bytesToHex(response));
+            }
+        } catch (TagLostException e) {
+            // Log and return
+            writeToUiAppend(textView, "ERROR: Tag lost exception OR Tag is not protected");
+            return null;
+        } catch (IOException e) {
+            writeToUiAppend(textView, "IOException: " + e.toString());
+            e.printStackTrace();
+            return null;
+        }
+        return response;
+    }
+
     private byte[] getTagSignatureResponse(NfcA nfcA) {
         byte[] response;
         byte[] command = new byte[]{
@@ -427,6 +554,21 @@ Asymmetric procedure consists of:
         Toast.makeText(this, "You need to enable NFC", Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
         startActivity(intent);
+    }
+
+    private void writeToUiAppend(TextView textView, String message) {
+        runOnUiThread(() -> {
+            String newString = message + "\n" + textView.getText().toString();
+            textView.setText(newString);
+        });
+    }
+
+    private void writeToUiToast(String message) {
+        runOnUiThread(() -> {
+            Toast.makeText(getApplicationContext(),
+                    message,
+                    Toast.LENGTH_SHORT).show();
+        });
     }
 
     @Override

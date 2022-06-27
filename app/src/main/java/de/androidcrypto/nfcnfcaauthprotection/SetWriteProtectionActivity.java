@@ -156,7 +156,7 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
                         return;
                     }
                     nfcaContent = nfcaContent + "Protection starting page: " + startProtectionPage + "\n";
-                    writeToUi2(nfcResult, nfcaContent);
+                    writeToUiAppend(nfcResult, nfcaContent);
 
                     // enable password protection for reading as well
                     readProtectionChecked = enableReadProtectionSwitch.isChecked();
@@ -271,16 +271,9 @@ public class SetWriteProtectionActivity extends AppCompatActivity implements Nfc
         return (byte) (input & ~(1 << pos));
     }
 
-
-    private void writeToUi2(TextView textView, String message) {
-        runOnUiThread(() -> {
-            textView.setText(message);
-        });
-    }
-
     private void writeToUiAppend(TextView textView, String message) {
         runOnUiThread(() -> {
-            String newString = textView.getText().toString() + "\n" + message;
+            String newString = message + "\n" + textView.getText().toString();
             textView.setText(newString);
         });
     }

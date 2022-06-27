@@ -6,6 +6,11 @@
     <!-- https://fonts.google.com/icons?selected=Material+Icons -->
 
     <item
+        android:id="@+id/action_read"
+        android:title="read from tag"
+        app:showAsAction="never"/>
+
+    <item
         android:id="@+id/action_write"
         android:title="write on tag"
         app:showAsAction="never"/>
@@ -13,18 +18,6 @@
     <item
         android:id="@+id/action_write_authentication"
         android:title="write with authentication"
-        app:showAsAction="never"/>
-
-    <item
-        android:id="@+id/action_export_mail"
-        android:icon="@drawable/ic_outline_attach_email_24"
-        android:title="Export Mail"
-        app:showAsAction="never"/>
-
-    <item
-        android:id="@+id/action_export_file"
-        android:icon="@drawable/ic_outline_file_download_24"
-        android:title="Export File"
         app:showAsAction="never"/>
 
     <item
@@ -50,6 +43,11 @@
     <item
         android:id="@+id/action_enable_ndef_message_mirror"
         android:title="enable mirror for NDEF message"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/action_verify_tag_signature"
+        android:title="verify tag signature"
         app:showAsAction="never"/>
 
 </menu>

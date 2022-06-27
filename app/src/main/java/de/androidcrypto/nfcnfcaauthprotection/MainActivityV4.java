@@ -14,55 +14,173 @@ import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.CompoundButton;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+
+import com.google.android.material.shape.CornerFamily;
+import com.google.android.material.shape.MaterialShapeDrawable;
+import com.google.android.material.shape.ShapeAppearanceModel;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 
-public class WriteActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
+public class MainActivityV4 extends AppCompatActivity implements NfcAdapter.ReaderCallback {
 
-    com.google.android.material.textfield.TextInputLayout passwordDecoration, packDecoration, inputFieldDecoration;
-    com.google.android.material.textfield.TextInputEditText passwordField, packField, inputField;
-    com.google.android.material.switchmaterial.SwitchMaterial authenticationSwitch;
-    TextView nfcResult;
+    com.google.android.material.textfield.TextInputLayout inputFieldDecoration;
+    com.google.android.material.textfield.TextInputEditText inputField;
+
+    TextView nfcResult, warning1;
+    Button fastRead;//, writeAuth, setWriteProtection, removeWriteProtection;
+    Button test, verifySignature;//, specialSettings, writeNdefMessage, enableMirrorForNdefMessage;
     private NfcAdapter mNfcAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_write);
+        setContentView(R.layout.activity_main);
         Toolbar myToolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(myToolbar);
 
-        inputField = findViewById(R.id.etWriteAuthInputField);
-        inputFieldDecoration = findViewById(R.id.etWriteAuthInputFieldDecoration);
-        nfcResult = findViewById(R.id.tvWriteAuthNfcaResult);
-        authenticationSwitch = findViewById(R.id.swWriteAuth);
-        passwordField = findViewById(R.id.etWriteAuthPassword);
-        passwordDecoration = findViewById(R.id.etWriteAuthPasswordDecoration);
-        packField = findViewById(R.id.etWriteAuthPack);
-        packDecoration = findViewById(R.id.etWriteAuthPackDecoration);
-        mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        warning1 = findViewById(R.id.tvMainWarning1);
+        //float radius = getResources().getDimension(R.dimen.textview_corner_radius);
+        float radius = 12f;
+                ShapeAppearanceModel shapeAppearanceModel = new ShapeAppearanceModel()
+                .toBuilder()
+                .setAllCorners(CornerFamily.ROUNDED,radius)
+                .build();
+        MaterialShapeDrawable shapeDrawable = new MaterialShapeDrawable(shapeAppearanceModel);
+        shapeDrawable.setFillColor(ContextCompat.getColorStateList(this, com.google.android.material.R.color.design_default_color_background));
+        shapeDrawable.setStroke(2.0f, ContextCompat.getColor(this, com.google.android.material.R.color.design_default_color_error));
+        ViewCompat.setBackground(warning1,shapeDrawable);
 
-        authenticationSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        inputField = findViewById(R.id.etMainInputField);
+        inputFieldDecoration = findViewById(R.id.etMainInputFieldDecoration);
+        nfcResult = findViewById(R.id.tvMainNfcaResult);
+        fastRead = findViewById(R.id.btnMainFastRead);
+        //writeAuth = findViewById(R.id.btnMainWriteAuth);
+
+        //setWriteProtection = findViewById(R.id.btnMainSetWriteProtection);
+        //removeWriteProtection = findViewById(R.id.btnMainRemoveWriteProtection);
+        //specialSettings = findViewById(R.id.btnMainSpecialSettings);
+        //writeNdefMessage = findViewById(R.id.btnMainWriteNdef);
+        //enableMirrorForNdefMessage = findViewById(R.id.btnMainEnableMirrorForNdef);
+
+        test = findViewById(R.id.btnMainTest);
+        verifySignature = findViewById(R.id.btnMainVerifySignature);
+
+        // todo mNfcAdapter is disabled - remove the complete context
+        // mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
+
+
+/*
+        writeAuth.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-                if (b) {
-                    passwordDecoration.setVisibility(View.VISIBLE);
-                    packDecoration.setVisibility(View.VISIBLE);
-                } else {
-                    passwordDecoration.setVisibility(View.GONE);
-                    packDecoration.setVisibility(View.GONE);
-                }
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, WriteAuthActivity.class);
+                startActivity(intent);
+            }
+        });*/
+/*
+        setWriteProtection.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, SetWriteProtectionActivity.class);
+                startActivity(intent);
             }
         });
+
+        removeWriteProtection.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, RemoveWriteProtectionActivity.class);
+                startActivity(intent);
+            }
+        });
+*/
+        test.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivityV4.this, CommandActivity.class);
+                startActivity(intent);
+                /*
+                byte accessByte = (byte) 0x80;
+                byte accessByteUnset = unsetBitInByte(accessByte, 7);
+                byte accessByteSet = setBitInByte(accessByteUnset, 7);
+                System.out.println("accessByte  : " + accessByte + " " + printByteArrayBinary(new byte[(byte) accessByte]));
+                System.out.println("accessByte u: " + accessByteUnset + " " + printByteArrayBinary(new byte[(byte) accessByteUnset]));
+                System.out.println("accessByte s: " + accessByteSet + " " + printByteArrayBinary(new byte[(byte) accessByteSet]));
+
+                 */
+            }
+        });
+
+        verifySignature.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivityV4.this, VerifyTagSignatureActivity.class);
+                startActivity(intent);
+            }
+        });
+/*
+        specialSettings.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, SpecialSettingsActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        writeNdefMessage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, WriteNdefMessageActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        enableMirrorForNdefMessage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, EnableMirrorForNdefActivity.class);
+                startActivity(intent);
+            }
+        });
+
+ */
     }
+
+
+    // ##### TEST METHODS #####
+    // position is 0 based starting from right to left
+    private byte setBitInByte(byte input, int pos) {
+        return (byte) (input | (1 << pos));
+    }
+
+    // position is 0 based starting from right to left
+    private byte unsetBitInByte(byte input, int pos) {
+        return (byte) (input & ~(1 << pos));
+    }
+
+    private static String printByteArrayBinary(byte[] bytes) {
+        String output = "";
+        for (byte b1 : bytes) {
+            String s1 = String.format("%8s", Integer.toBinaryString(b1 & 0xFF)).replace(' ', '0');
+            //s1 += " " + Integer.toHexString(b1);
+            //s1 += " " + b1;
+            //output = output + " " + s1;
+            output = s1;
+            //System.out.println(s1);
+        }
+        return output;
+    }
+
+    // ##### TEST METHODS END #####
 
     // This method is run in another thread when a card is discovered
     // !!!! This method cannot cannot direct interact with the UI Thread
@@ -80,8 +198,13 @@ public class WriteActivity extends AppCompatActivity implements NfcAdapter.Reade
             nfcA = NfcA.get(tag);
 
             if (nfcA != null) {
-                writeToUiToast("NFC tag is Nfca compatible");
-
+                /*
+                runOnUiThread(() -> {
+                    Toast.makeText(getApplicationContext(),
+                            "NFC tag is Nfca compatible",
+                            Toast.LENGTH_SHORT).show();
+                });
+                */
                 // Make a Sound
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     ((Vibrator) getSystemService(VIBRATOR_SERVICE)).vibrate(VibrationEffect.createOneShot(150, 10));
@@ -95,8 +218,12 @@ public class WriteActivity extends AppCompatActivity implements NfcAdapter.Reade
                 // check that the tag is a NTAG213/215/216 manufactured by NXP - stop if not
                 String ntagVersion = NfcIdentifyNtag.checkNtagType(nfcA, tag.getId());
                 if (ntagVersion.equals("0")) {
-                    writeToUiAppend(nfcResult, "NFC tag is NOT of type NXP NTAG213/215/216");
-                    writeToUiToast("NFC tag is NOT of type NXP NTAG213/215/216");
+                    runOnUiThread(() -> {
+                        nfcResult.setText("NFC tag is NOT of type NXP NTAG213/215/216");
+                        Toast.makeText(getApplicationContext(),
+                                "NFC tag is NOT of type NXP NTAG213/215/216",
+                                Toast.LENGTH_SHORT).show();
+                    });
                     return;
                 }
 
@@ -114,77 +241,16 @@ public class WriteActivity extends AppCompatActivity implements NfcAdapter.Reade
                 // read the complete memory depending on ntag type
                 byte[] ntagMemory = new byte[ntagMemoryBytes];
                 // read the content of the tag in several runs
-                byte[] response = new byte[0];
+                byte[] response;
                 try {
-                    // do we want to write with or without authentication ?
-                    boolean writeWithAuthentication = authenticationSwitch.isChecked();
-                    if (writeWithAuthentication) {
-                        // get data from passwordField
-                        String passwordString = passwordField.getText().toString();
-                        // limitation: exact 4 alphanumerical characters
-                        passwordString = Utils.removeAllNonAlphaNumeric(passwordString);
-                        if (passwordString.length() != 4) {
-                            nfcaContent = nfcaContent + "Error: you need to enter exact 4 alphanumerical characters for PASSWORD" + "\n";
-                            writeToUiAppend(nfcResult, nfcaContent);
-                            return;
-                        }
-                        byte[] passwordByte = passwordString.getBytes(StandardCharsets.UTF_8);
-                        int passwordLength = passwordByte.length;
-                        nfcaContent = nfcaContent + "Password: " + passwordString + " hex: " + Utils.bytesToHex(passwordByte) + "\n";
-
-                        // get pack from etWriteProtectionPack
-                        String packString = packField.getText().toString();
-                        // limitation: exact 2 alphanumerical characters
-                        packString = Utils.removeAllNonAlphaNumeric(packString);
-                        if (packString.length() != 2) {
-                            nfcaContent = nfcaContent + "Error: you need to enter exact 2 alphanumerical characters for PACK" + "\n";
-                            writeToUiAppend(nfcResult, nfcaContent);
-                            return;
-                        }
-                        byte[] packByte = packString.getBytes(StandardCharsets.UTF_8);
-                        int packLength = packByte.length;
-                        nfcaContent = nfcaContent + "Pack: " + packString + " hex: " + Utils.bytesToHex(packByte) + "\n";
-                        // as we write a complete page we need to fill up the bytes 3 + 4 with 0x00
-                        byte[] packBytePage = new byte[4];
-                        System.arraycopy(packByte, 0, packBytePage, 0, 2);
-
-                        // send the pwdAuth command
-                        // this is the default value
-                        byte[] passwordByteDefault = new byte[]{
-                                (byte) (255 & 0x0ff),
-                                (byte) (255 & 0x0ff),
-                                (byte) (255 & 0x0ff),
-                                (byte) (255 & 0x0ff)
-                        };
-                        //passwordByte = passwordByteDefault.clone();
-                        writeToUiAppend(nfcResult, "*** start authentication");
-                        response = sendPwdAuthData(nfcA, passwordByte, nfcResult);
-                        if (response == null) {
-                            writeToUiAppend(nfcResult, "authentication FAILURE. Maybe wrong password or the tag is not write protected");
-                            return;
-                        }
-                        byte[] packResponse = response.clone();
-                        if (Arrays.equals(packResponse, packByte)) {
-                            writeToUiAppend(nfcResult, "The entered PACK is correct");
-                        } else {
-                            writeToUiAppend(nfcResult, "entered PACK: " + Utils.bytesToHex(packByte));
-                            writeToUiAppend(nfcResult, "Respons PACK: " + Utils.bytesToHex(packResponse));
-                            writeToUiAppend(nfcResult, "The entered PACK is NOT correct, abort");
-                            writeToUiToast("The entered PACK is NOT correct, abort");
-                            return;
-                        }
-
-                    } // writeWithAuthentication
-
-                    //
                     // get data from InputField
                     String dataString = inputField.getText().toString();
-/*
+
                     // limitation: maximal 8 characters
-                    if (dataString.length() > 8 ) {
+                    if (dataString.length() > 8) {
                         dataString = dataString.substring(0, 8);
                     }
-*/
+
                     byte[] dataByte = dataString.getBytes(StandardCharsets.UTF_8);
                     int dataLength = dataByte.length;
                     // as the Tag is saving in blocks of 4 bytes we need to know how many pages we do need
@@ -197,8 +263,13 @@ public class WriteActivity extends AppCompatActivity implements NfcAdapter.Reade
 
                     // check that the data is fitting on the tag
                     if (dataLength > ntagMemoryBytes) {
-                        writeToUiAppend(nfcResult, "data in InputField is too long for tag");
-                        writeToUiToast("data in InputField is too long for tag");
+                        runOnUiThread(() -> {
+                            nfcResult.setText("data in InputField is too long for tag");
+                            System.out.println("data in InputField is too long for tag");
+                            Toast.makeText(getApplicationContext(),
+                                    "data in InputField is too long for tag",
+                                    Toast.LENGTH_SHORT).show();
+                        });
                         return;
                     }
                     nfcaContent = nfcaContent + "writing full pages" + "\n";
@@ -221,32 +292,46 @@ public class WriteActivity extends AppCompatActivity implements NfcAdapter.Reade
                             // Log and return
                             nfcaContent = nfcaContent + "ERROR: null response";
                             String finalNfcaText = nfcaContent;
-                            writeToUiAppend(nfcResult, finalNfcaText);
+                            runOnUiThread(() -> {
+                                nfcResult.setText(finalNfcaText);
+                                System.out.println(finalNfcaText);
+                            });
                             return;
                         } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
                             // NACK response according to Digital Protocol/T2TOP
                             // Log and return
                             nfcaContent = nfcaContent + "ERROR: NACK response: " + Utils.bytesToHex(response);
                             String finalNfcaText = nfcaContent;
-                            writeToUiAppend(nfcResult, finalNfcaText);
+                            runOnUiThread(() -> {
+                                nfcResult.setText(finalNfcaText);
+                                System.out.println(finalNfcaText);
+                            });
                             return;
                         } else {
                             // success: response contains ACK or actual data
+                            // nfcaContent = nfcaContent + "successful reading " + response.length + " bytes\n";
+                            // nfcaContent = nfcaContent + bytesToHex(response) + "\n";
                             // copy the response to the ntagMemory
+                            //nfcaContent = nfcaContent + "number of bytes read: : " + response.length + "\n";
                             nfcaContent = nfcaContent + "response:\n" + Utils.bytesToHex(response) + "\n";
                             //System.arraycopy(response, 0, ntagMemory, (nfcaMaxTranceive4ByteLength * i), nfcaMaxTranceive4ByteLength);
                         }
+
                     }
 
-                    // ### section for writing only a part of page
+                    // ### section for writing only part of page
                     if (dataPagesMod == 0) {
                         // don't write a new page
                         nfcaContent = nfcaContent + "write result: SUCCESS" + "\n";
-                        writeToUiAppend(nfcResult, nfcaContent);
+                        writeToUi(nfcResult, nfcaContent);
+                        runOnUiThread(() -> {
+                            Toast.makeText(getApplicationContext(),
+                                    "Data written SUCCESSFUL",
+                                    Toast.LENGTH_SHORT).show();
+                        });
                         try {
                             nfcA.close();
                         } catch (IOException e) {
-                            writeToUiAppend(nfcResult, "IOException: " + e);
                         }
                         return;
                     }
@@ -289,114 +374,109 @@ public class WriteActivity extends AppCompatActivity implements NfcAdapter.Reade
                         // Log and return
                         nfcaContent = nfcaContent + "ERROR: null response";
                         String finalNfcaText = nfcaContent;
-                        writeToUiAppend(nfcResult, finalNfcaText);
+                        runOnUiThread(() -> {
+                            nfcResult.setText(finalNfcaText);
+                            System.out.println(finalNfcaText);
+                        });
                         return;
                     } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
                         // NACK response according to Digital Protocol/T2TOP
                         // Log and return
                         nfcaContent = nfcaContent + "ERROR: NACK response: " + Utils.bytesToHex(response);
                         String finalNfcaText = nfcaContent;
-                        writeToUiAppend(nfcResult, finalNfcaText);
+                        runOnUiThread(() -> {
+                            nfcResult.setText(finalNfcaText);
+                            System.out.println(finalNfcaText);
+                        });
                         return;
                     } else {
                         // success: response contains ACK or actual data
+                        // nfcaContent = nfcaContent + "successful reading " + response.length + " bytes\n";
+                        // nfcaContent = nfcaContent + bytesToHex(response) + "\n";
                         // copy the response to the ntagMemory
                         //nfcaContent = nfcaContent + "number of bytes read: : " + response.length + "\n";
                         nfcaContent = nfcaContent + "response:\n" + Utils.bytesToHex(response) + "\n";
                         //System.arraycopy(response, 0, ntagMemory, (nfcaMaxTranceive4ByteLength * i), nfcaMaxTranceive4ByteLength);
                     }
 
-                } catch(TagLostException e){
+                } catch (TagLostException e) {
                     // Log and return
-                    System.out.println("ERROR: Tag lost exception in body of WriteAuth");
                     nfcaContent = nfcaContent + "ERROR: Tag lost exception";
                     String finalNfcaText = nfcaContent;
-                    writeToUiAppend(nfcResult, finalNfcaText);
+                    runOnUiThread(() -> {
+                        nfcResult.setText(finalNfcaText);
+                        System.out.println(finalNfcaText);
+                    });
                     return;
-                } catch(IOException e){
-                    writeToUiAppend(nfcResult, "WIOException: " + e + "\nMaybe the tag is write protected ?");
+                } catch (IOException e) {
+                    nfcaContent = nfcaContent + "IOException: " + e.toString();
+                    String finalNfcaText = nfcaContent;
+                    runOnUiThread(() -> {
+                        nfcResult.setText(finalNfcaText);
+                        System.out.println(finalNfcaText);
+                    });
                     e.printStackTrace();
                     return;
                 }
                 nfcaContent = nfcaContent + "write result: SUCCESS" + "\n";
                 String finalNfcaRawText = nfcaContent;
                 String finalNfcaText = "parsed content:\n" + new String(ntagMemory, StandardCharsets.US_ASCII);
-                writeToUiAppend(nfcResult, finalNfcaRawText);
-                writeToUiAppend(nfcResult, finalNfcaText);
-            } else{
-                writeToUiToast("NFC tag is NOT Nfca compatible");
-                return;
+                runOnUiThread(() -> {
+                    nfcResult.setText(finalNfcaRawText);
+                    nfcResult.setText(finalNfcaText);
+                    System.out.println(finalNfcaRawText);
+                    Toast.makeText(getApplicationContext(),
+                            "Data written SUCCESSSFUL",
+                            Toast.LENGTH_SHORT).show();
+
+                });
+            } else {
+                runOnUiThread(() -> {
+                    Toast.makeText(getApplicationContext(),
+                            "NFC tag is NOT Nfca compatible",
+                            Toast.LENGTH_SHORT).show();
+                });
             }
-        } catch ( IOException e)
-        {
+        } catch (IOException e) {
             //Trying to catch any ioexception that may be thrown
             e.printStackTrace();
-            writeToUiAppend(nfcResult, "XIOException: " + e);
-            return;
-        } catch ( Exception e)
-        {
+            String finalNfcaRawText = "ERROR: IOException";
+            String finalNfcaText = "ERROR: IOException";
+            runOnUiThread(() -> {
+                nfcResult.setText(finalNfcaRawText);
+                nfcResult.setText(finalNfcaText);
+                System.out.println(finalNfcaRawText);
+            });
+        } catch (Exception e) {
+            String finalNfcaRawText = "ERROR: Exception";
+            String finalNfcaText = "ERROR: Exception";
+            runOnUiThread(() -> {
+                nfcResult.setText(finalNfcaRawText);
+                nfcResult.setText(finalNfcaText);
+                System.out.println(finalNfcaRawText);
+            });
             //Trying to catch any exception that may be thrown
             e.printStackTrace();
-            writeToUiAppend(nfcResult, "Exception: " + e);
-            return;
-        } finally
-        {
+
+        } finally {
             try {
                 nfcA.close();
             } catch (IOException e) {
-                writeToUiAppend(nfcResult, "YIOException: " + e);
+                String finalNfcaRawText = "ERROR: IOException";
+                String finalNfcaText = "ERROR: IOException";
+                runOnUiThread(() -> {
+                    nfcResult.setText(finalNfcaRawText);
+                    nfcResult.setText(finalNfcaText);
+                    System.out.println(finalNfcaRawText);
+                });
             }
         }
+
     }
 
-    private byte[] sendPwdAuthData(NfcA nfcA, byte[] passwordByte, TextView textView) {
-        byte[] response; // the response is the PACK returned by the tag when successful authentication
-        byte[] command = new byte[]{
-                (byte) 0x1B,  // PWD_AUTH
-                passwordByte[0],
-                passwordByte[1],
-                passwordByte[2],
-                passwordByte[3]
-        };
-        try {
-            response = nfcA.transceive(command); // response should be 16 bytes = 4 pages
-            if (response == null) {
-                // either communication to the tag was lost or a NACK was received
-                writeToUiAppend(textView, "ERROR: null response");
-                return null;
-            } else if ((response.length == 1) && ((response[0] & 0x00A) != 0x00A)) {
-                // NACK response according to Digital Protocol/T2TOP
-                // Log and return
-                writeToUiAppend(textView, "ERROR: NACK response: " + Utils.bytesToHex(response));
-                return null;
-            } else {
-                // success: response contains (P)ACK or actual data
-                writeToUiAppend(textView, "SUCCESS: response: " + Utils.bytesToHex(response));
-            }
-        } catch (TagLostException e) {
-            // Log and return
-            writeToUiAppend(textView, "ERROR: Tag lost exception OR Tag is not protected");
-            return null;
-        } catch (IOException e) {
-            writeToUiAppend(textView, "IOException: " + e.toString());
-            e.printStackTrace();
-            return null;
-        }
-        return response;
-    }
-
-    private void writeToUiAppend(TextView textView, String message) {
+    private void writeToUi(TextView textView, String message) {
         runOnUiThread(() -> {
-            String newString = message + "\n" + textView.getText().toString();
-            textView.setText(newString);
-        });
-    }
-
-    private void writeToUiToast(String message) {
-        runOnUiThread(() -> {
-            Toast.makeText(getApplicationContext(),
-                    message,
-                    Toast.LENGTH_SHORT).show();
+            textView.setText(message);
         });
     }
 
@@ -410,11 +490,21 @@ public class WriteActivity extends AppCompatActivity implements NfcAdapter.Reade
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_activity_main, menu);
 
+        MenuItem mWrite = menu.findItem(R.id.action_write);
+        mWrite.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(MainActivityV4.this, WriteActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
         MenuItem mWriteAuthentication = menu.findItem(R.id.action_write_authentication);
         mWriteAuthentication.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Intent i = new Intent(WriteActivity.this, WriteActivity.class);
+                Intent i = new Intent(MainActivityV4.this, WriteAuthActivity.class);
                 startActivity(i);
                 return false;
             }
@@ -424,7 +514,7 @@ public class WriteActivity extends AppCompatActivity implements NfcAdapter.Reade
         mWriteProtection.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Intent i = new Intent(WriteActivity.this, SetWriteProtectionActivity.class);
+                Intent i = new Intent(MainActivityV4.this, SetWriteProtectionActivity.class);
                 startActivity(i);
                 return false;
             }
@@ -434,7 +524,7 @@ public class WriteActivity extends AppCompatActivity implements NfcAdapter.Reade
         mRemoveProtection.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Intent i = new Intent(WriteActivity.this, RemoveWriteProtectionActivity.class);
+                Intent i = new Intent(MainActivityV4.this, RemoveWriteProtectionActivity.class);
                 startActivity(i);
                 return false;
             }
@@ -444,7 +534,7 @@ public class WriteActivity extends AppCompatActivity implements NfcAdapter.Reade
         mSpecialSettings.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Intent i = new Intent(WriteActivity.this, SpecialSettingsActivity.class);
+                Intent i = new Intent(MainActivityV4.this, SpecialSettingsActivity.class);
                 startActivity(i);
                 return false;
             }
@@ -454,7 +544,7 @@ public class WriteActivity extends AppCompatActivity implements NfcAdapter.Reade
         mWriteNdef.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Intent i = new Intent(WriteActivity.this, WriteNdefMessageActivity.class);
+                Intent i = new Intent(MainActivityV4.this, WriteNdefMessageActivity.class);
                 startActivity(i);
                 return false;
             }
@@ -464,7 +554,7 @@ public class WriteActivity extends AppCompatActivity implements NfcAdapter.Reade
         mEnableMirrorNdefMessage.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Intent i = new Intent(WriteActivity.this, EnableMirrorForNdefActivity.class);
+                Intent i = new Intent(MainActivityV4.this, EnableMirrorForNdefActivity.class);
                 startActivity(i);
                 return false;
             }
@@ -507,5 +597,4 @@ public class WriteActivity extends AppCompatActivity implements NfcAdapter.Reade
         if (mNfcAdapter != null)
             mNfcAdapter.disableReaderMode(this);
     }
-
 }

@@ -483,27 +483,6 @@ public class WriteAuthActivity extends AppCompatActivity implements NfcAdapter.R
             }
         });
 
-        MenuItem mExportMail = menu.findItem(R.id.action_export_mail);
-        mExportMail.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                //Intent i = new Intent(MainActivity.this, AddEntryActivity.class);
-                //startActivity(i);
-                //exportDumpMail();
-                return false;
-            }
-        });
-
-        MenuItem mExportFile = menu.findItem(R.id.action_export_file);
-        mExportFile.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                //Intent i = new Intent(MainActivity.this, AddEntryActivity.class);
-                //startActivity(i);
-                //exportDumpFile();
-                return false;
-            }
-        });
         return super.onCreateOptionsMenu(menu);
     }
 

@@ -4,6 +4,8 @@
     <dimen name="toolbar_elevation">4dp</dimen>
     <dimen name="toolbar_size">64dp</dimen>
 
+    <dimen name="textview_corner_radius">12f</dimen>
+
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="text_margin">16dp</dimen>
 
