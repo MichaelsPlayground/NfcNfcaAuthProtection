@@ -49,6 +49,9 @@ public class VerifyTagSignatureActivity extends AppCompatActivity implements Nfc
                 "3E89ED19FE5BE8BC61");
     }
 
+    //04494E1A386D3D3CFE3DC10E5DE68A499B1C202DB5B132393E89ED19FE5BE8BC61
+    // found in https://github.com/alexbatalov/node-nxp-originality-verifier/blob/master/index.js
+
     // This method is run in another thread when a card is discovered
     // !!!! This method cannot cannot direct interact with the UI Thread
     // Use `runOnUiThread` method to change the UI from this method
@@ -105,7 +108,7 @@ public class VerifyTagSignatureActivity extends AppCompatActivity implements Nfc
                 byte[] response = new byte[0];
 
                 try {
-                    String commandString = "3c00"; // read signature
+                    String commandString = "3C00"; // read signature
                     byte[] commandByte = Utils.hexStringToByteArray(commandString);
                     try {
                         response = nfcA.transceive(commandByte); // response should be 16 bytes = 4 pages
@@ -158,7 +161,7 @@ public class VerifyTagSignatureActivity extends AppCompatActivity implements Nfc
         PublicKey pubKey = null;
         publicKeyByte = Utils.hexStringToByteArray(publicKeyNxp.getText().toString());
         try {
-            kf = KeyFactory.getInstance("EC");
+            kf = KeyFactory.getInstance("ECDH");
             pubKey = (PublicKey) kf.generatePublic(new X509EncodedKeySpec(publicKeyByte));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             e.printStackTrace();
@@ -184,7 +187,7 @@ public class VerifyTagSignatureActivity extends AppCompatActivity implements Nfc
      Signature publicSignature = null;
      try {
          //publicSignature = Signature.getInstance("SHA256withECDSAinP1363format");
-         publicSignature = Signature.getInstance("SHA384withECDSAinP1363format");
+         publicSignature = Signature.getInstance("SHA1withECDSAinP1363format");
          publicSignature.initVerify(publicKey);
          publicSignature.update(messageByte);
          return publicSignature.verify(signatureByte);
