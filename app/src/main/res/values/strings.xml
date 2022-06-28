@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">NfcNfcaAuthProtection</string>
+    <string name="warning_en">WARNING: this app can seriously damage or make it unusable when working with tags that are used for other applications.\nUse only fresh tags and please remember (or write it down) the password string in write protection as there is no recovery option when your password ist lost.\nSome actions are hardcoded to work only with tags of type NTAG216.</string>
+    <string name="warning_de">WARNUNG: diese App kann ihren Tag unwiderruflich beschädigen oder ihn mit anderen Anwendungen unbenutzbar machen.\nBenutzen Sie neue (frische) Tags und merken Sie sich das Passwort (oder schreiben Sie es auf) das Sie für den Schreibschutz verwendet haben - es gibt keine Wiederherstellungsoption.\nEinige Aktionen sind nur mit dem Typ NTAG216 nutzbar.</string>
 </resources>
