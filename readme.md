@@ -83,6 +83,6 @@ NXP public key from easy_ecc_test.c
         0x3E, 0x89, 0xED, 0x19, 0xFE, 0x5B, 0xE8, 0xBC, 0x61 };
 ```
 
-The app icon is generated with help from **Launcher icon generator**
-(https://romannurik.github.io/AndroidAssetStudio/icons-launcher.html),
-(options trim image and resize to 110%, color #2196F3)
+The app icon is generated with help from **Launcher icon generator** 
+(https://romannurik.github.io/AndroidAssetStudio/icons-launcher.html), 
+(options trim image and resize to 110%, color #2196F3).
