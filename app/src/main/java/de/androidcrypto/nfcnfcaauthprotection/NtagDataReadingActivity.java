@@ -15,6 +15,8 @@ import android.provider.Settings;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.BackgroundColorSpan;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.EditText;
@@ -210,6 +212,24 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
                     if (!responseSuccessful) return;
                     responseSuccessful = getTagData(nfcA, 04, page04, page05, null, null, readResult);
                     if (!responseSuccessful) return;
+                    // show ascii characters in page 04 and 05 if available
+                    try {
+                        byte[] page04Org = Utils.hexStringToByteArray(page04.getText().toString());
+                        byte[] page05Org = Utils.hexStringToByteArray(page05.getText().toString());
+                        String page04NewHex = Utils.bytesToHex(page04Org) + " (" +
+                                new String(page04Org, StandardCharsets.US_ASCII) +
+                                ")";
+                        String page05NewHex = Utils.bytesToHex(page05Org) + " (" +
+                                new String(page05Org, StandardCharsets.US_ASCII) +
+                                ")";
+                        runOnUiThread(() -> {
+                            page04.setText(page04NewHex);
+                            page05.setText(page05NewHex);
+                        });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
                     responseSuccessful = getTagData(nfcA, 226, pageE2, pageE3, pageE4, pageE5, readResult);
                     if (!responseSuccessful) return;
                     byte[] responsePage226 = getTagDataResponse(nfcA, 226);
@@ -270,32 +290,7 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
                     // pages 50/51
                     // NTAG public key:
                     // 048A9B380AF2EE1B98DC417FECC263F8449C7625CECE82D9B916C992DA209D68 422B81EC20B65A66B5102A61596AF3379200599316A00A1410
-/*
-NTAG 424 DNA contains the NXP Originality Signature:
-• It is computed according to Elliptic Curve DSA (ECDSA) based on the UID
-• Key pair created in NXP Fabs HSM. Private key stored in high secure HSM in NXP
-premises
-• Signature is 56 bytes long and according to SEC standard the secp224r1 curve is
-taken
-Asymmetric procedure consists of:
-• retrieve Originality Signature (56 bytes) from the PICC with Cmd.Read_Sig command (NTAG 424 needs to be in ISO14443 - Layer 4 level).
-• public key is required by the verifier - available for public below
-• ECDSA signature verifying operation needs to be applied - procedure and sample code
-(C#, Java, C) can be found in Application Note [9]
- */
-/*
-                    byte[] nfcSignature = getTagSignatureResponse(nfcA);
-                    String nfcTagSignatureString = "";
-                    if (nfcSignature != null) {
-                        nfcTagSignatureString = bytesToHex(nfcSignature);
-                    } else {
-                        nfcTagSignatureString = "signature not available";
-                    }
-                    String finalNfcTagSignatureString = nfcTagSignatureString;
-                    runOnUiThread(() -> {
-                        signatureField.setText(finalNfcTagSignatureString);
-                    });
-*/
+
                     String finalNfcaRawText = nfcaContent;
                     String finalNfcaText = "parsed content:\n" + new String(ntagMemory, StandardCharsets.US_ASCII);
                     runOnUiThread(() -> {
@@ -569,6 +564,83 @@ Asymmetric procedure consists of:
                     message,
                     Toast.LENGTH_SHORT).show();
         });
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_activity_main, menu);
+
+        MenuItem mRead = menu.findItem(R.id.action_read);
+        mRead.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(NtagDataReadingActivity.this, NtagDataReadingActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mWrite = menu.findItem(R.id.action_write);
+        mWrite.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(NtagDataReadingActivity.this, WriteActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mWriteProtection = menu.findItem(R.id.action_write_protection);
+        mWriteProtection.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(NtagDataReadingActivity.this, SetWriteProtectionActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mRemoveProtection = menu.findItem(R.id.action_remove_protection);
+        mRemoveProtection.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(NtagDataReadingActivity.this, RemoveWriteProtectionActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mSpecialSettings = menu.findItem(R.id.action_special_settings);
+        mSpecialSettings.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(NtagDataReadingActivity.this, SpecialSettingsActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mWriteNdef = menu.findItem(R.id.action_write_ndef_message);
+        mWriteNdef.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(NtagDataReadingActivity.this, WriteNdefMessageActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mEnableMirrorNdefMessage = menu.findItem(R.id.action_enable_ndef_message_mirror);
+        mEnableMirrorNdefMessage.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(NtagDataReadingActivity.this, EnableMirrorForNdefActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override

@@ -30,7 +30,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="10dp"
-                android:text="This app writes data with NCFA to a NFC-Tag of type NXP NTAG216 only."
+                android:text="This app works with with NCFA and a NFC-Tag of type NXP NTAG216 only."
                 android:textAlignment="center"
                 android:textSize="20sp"
                 android:textStyle="bold" />

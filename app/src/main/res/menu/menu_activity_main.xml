@@ -16,18 +16,13 @@
         app:showAsAction="never"/>
 
     <item
-        android:id="@+id/action_write_authentication"
-        android:title="write with authentication"
-        app:showAsAction="never"/>
-
-    <item
         android:id="@+id/action_write_protection"
         android:title="write protection"
         app:showAsAction="never"/>
 
     <item
         android:id="@+id/action_remove_protection"
-        android:title="remove_protection"
+        android:title="remove protection"
         app:showAsAction="never"/>
 
     <item
@@ -43,11 +38,6 @@
     <item
         android:id="@+id/action_enable_ndef_message_mirror"
         android:title="enable mirror for NDEF message"
-        app:showAsAction="never"/>
-
-    <item
-        android:id="@+id/action_verify_tag_signature"
-        android:title="verify tag signature"
         app:showAsAction="never"/>
 
 </menu>

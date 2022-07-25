@@ -410,11 +410,11 @@ public class WriteActivity extends AppCompatActivity implements NfcAdapter.Reade
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_activity_main, menu);
 
-        MenuItem mWriteAuthentication = menu.findItem(R.id.action_write_authentication);
-        mWriteAuthentication.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        MenuItem mRead = menu.findItem(R.id.action_read);
+        mRead.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Intent i = new Intent(WriteActivity.this, WriteActivity.class);
+                Intent i = new Intent(WriteActivity.this, NtagDataReadingActivity.class);
                 startActivity(i);
                 return false;
             }

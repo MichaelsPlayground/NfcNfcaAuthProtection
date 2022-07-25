@@ -26,19 +26,10 @@
             android:name=".SpecialSettingsActivity"
             android:exported="false" />
         <activity
-            android:name=".VerifyTagSignatureActivity"
-            android:exported="false" />
-        <activity
             android:name=".CommandActivity"
             android:exported="false" />
         <activity
             android:name=".WriteActivity"
-            android:exported="false" />
-        <activity
-            android:name=".WriteAuthActivity"
-            android:exported="false" />
-        <activity
-            android:name=".FastReadAuthActivity"
             android:exported="false" />
         <activity
             android:name=".RemoveWriteProtectionActivity"
@@ -48,9 +39,6 @@
             android:exported="false" />
         <activity
             android:name=".SetWriteProtectionActivity"
-            android:exported="false" />
-        <activity
-            android:name=".FastReadActivity"
             android:exported="false" />
         <activity
             android:name=".MainActivity"

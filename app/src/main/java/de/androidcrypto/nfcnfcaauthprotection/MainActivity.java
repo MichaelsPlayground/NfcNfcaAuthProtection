@@ -42,16 +42,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        MenuItem mWriteAuthentication = menu.findItem(R.id.action_write_authentication);
-        mWriteAuthentication.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                Intent i = new Intent(MainActivity.this, WriteAuthActivity.class);
-                startActivity(i);
-                return false;
-            }
-        });
-
         MenuItem mWriteProtection = menu.findItem(R.id.action_write_protection);
         mWriteProtection.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
@@ -102,15 +92,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        MenuItem mVerifyTagSignature = menu.findItem(R.id.action_verify_tag_signature);
-        mVerifyTagSignature.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-            @Override
-            public boolean onMenuItemClick(MenuItem item) {
-                Intent i = new Intent(MainActivity.this, VerifyTagSignatureActivity.class);
-                startActivity(i);
-                return false;
-            }
-        });
         return super.onCreateOptionsMenu(menu);
     }
 }
