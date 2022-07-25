@@ -519,7 +519,7 @@
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:focusable="false"
-                    android:maxLines="1"
+                    android:maxLines="3"
                     android:text="signature of the tag"
                     tools:ignore="KeyboardInaccessibleWidget" />
             </com.google.android.material.textfield.TextInputLayout>

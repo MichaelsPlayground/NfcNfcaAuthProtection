@@ -93,7 +93,7 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
         // in this example the card should be an Ndef Technology Type
 
         System.out.println("NFC tag discovered");
-
+        clearAllFields();
         NfcA nfcA = null;
 
         nfcA = NfcA.get(tag);
@@ -212,24 +212,6 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
                     if (!responseSuccessful) return;
                     responseSuccessful = getTagData(nfcA, 04, page04, page05, null, null, readResult);
                     if (!responseSuccessful) return;
-                    // show ascii characters in page 04 and 05 if available
-                    try {
-                        byte[] page04Org = Utils.hexStringToByteArray(page04.getText().toString());
-                        byte[] page05Org = Utils.hexStringToByteArray(page05.getText().toString());
-                        String page04NewHex = Utils.bytesToHex(page04Org) + " (" +
-                                new String(page04Org, StandardCharsets.US_ASCII) +
-                                ")";
-                        String page05NewHex = Utils.bytesToHex(page05Org) + " (" +
-                                new String(page05Org, StandardCharsets.US_ASCII) +
-                                ")";
-                        runOnUiThread(() -> {
-                            page04.setText(page04NewHex);
-                            page05.setText(page05NewHex);
-                        });
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
                     responseSuccessful = getTagData(nfcA, 226, pageE2, pageE3, pageE4, pageE5, readResult);
                     if (!responseSuccessful) return;
                     byte[] responsePage226 = getTagDataResponse(nfcA, 226);
@@ -291,6 +273,38 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
                     // NTAG public key:
                     // 048A9B380AF2EE1B98DC417FECC263F8449C7625CECE82D9B916C992DA209D68 422B81EC20B65A66B5102A61596AF3379200599316A00A1410
 
+                    byte[] nfcSignature = getTagSignatureResponse(nfcA);
+                    String nfcTagSignatureString = "";
+                    if (nfcSignature != null) {
+                        nfcTagSignatureString = Utils.bytesToHex(nfcSignature);
+                    } else {
+                        nfcTagSignatureString = "signature not enabled";
+                    }
+                    String finalNfcTagSignatureString = nfcTagSignatureString;
+                    runOnUiThread(() -> {
+                        signatureField.setText(finalNfcTagSignatureString);
+                    });
+
+
+                    /*
+                    // show ascii characters in page 04 and 05 if available
+                    try {
+                        byte[] page04Org = Utils.hexStringToByteArray(page04.getText().toString());
+                        byte[] page05Org = Utils.hexStringToByteArray(page05.getText().toString());
+                        String page04NewHex = Utils.bytesToHex(page04Org) + " (" +
+                                new String(page04Org, StandardCharsets.US_ASCII) +
+                                ")";
+                        String page05NewHex = Utils.bytesToHex(page05Org) + " (" +
+                                new String(page05Org, StandardCharsets.US_ASCII) +
+                                ")";
+                        runOnUiThread(() -> {
+                            page04.setText(page04NewHex);
+                            page05.setText(page05NewHex);
+                        });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    */
                     String finalNfcaRawText = nfcaContent;
                     String finalNfcaText = "parsed content:\n" + new String(ntagMemory, StandardCharsets.US_ASCII);
                     runOnUiThread(() -> {
@@ -505,6 +519,25 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
             return null;
         }
         return response;
+    }
+
+    private void clearAllFields() {
+        runOnUiThread(() -> {
+            page00.setText("");
+            page01.setText("");
+            page02.setText("");
+            page03.setText("");
+            page04.setText("");
+            page05.setText("");
+            pageE2.setText("");
+            pageE3.setText("");
+            pageE4.setText("");
+            pageE4Byte0.setText("");
+            pageE5.setText("");
+            pageE6.setText("");
+            counterField.setText("");
+            signatureField.setText("");
+        });
     }
 
     private byte[] getTagSignatureResponse(NfcA nfcA) {
