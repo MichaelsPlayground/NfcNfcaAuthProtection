@@ -5,6 +5,7 @@
       <map>
         <entry key="app/src/main/res/drawable/ic_outline_attach_email_24.xml" value="0.166" />
         <entry key="app/src/main/res/drawable/share_rounded_corner_with_border_error.xml" value="0.193" />
+        <entry key="app/src/main/res/layout/activity_clear_tag.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_command.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_enable_mirror_for_ndef.xml" value="0.15526849037487336" />
         <entry key="app/src/main/res/layout/activity_fast_read.xml" value="0.14842958459979735" />

@@ -40,4 +40,8 @@
         android:title="enable mirror for NDEF message"
         app:showAsAction="never"/>
 
+    <item
+        android:id="@+id/action_clear_tag"
+        android:title="clear tag to factory settings"
+        app:showAsAction="never"/>
 </menu>
