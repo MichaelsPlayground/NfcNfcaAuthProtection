@@ -26,9 +26,6 @@
             android:name=".SpecialSettingsActivity"
             android:exported="false" />
         <activity
-            android:name=".CommandActivity"
-            android:exported="false" />
-        <activity
             android:name=".WriteActivity"
             android:exported="false" />
         <activity

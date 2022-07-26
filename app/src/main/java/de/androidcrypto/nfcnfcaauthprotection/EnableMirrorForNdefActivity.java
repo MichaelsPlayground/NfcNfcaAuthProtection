@@ -1,8 +1,10 @@
 package de.androidcrypto.nfcnfcaauthprotection;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import android.content.Context;
+import android.content.Intent;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.TagLostException;
@@ -11,6 +13,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,6 +30,9 @@ public class EnableMirrorForNdefActivity extends AppCompatActivity implements Nf
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_enable_mirror_for_ndef);
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.main_toolbar);
+        setSupportActionBar(myToolbar);
+
         responseField = findViewById(R.id.etetEnableMirrorForNdefResponse);
 
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
@@ -297,5 +304,82 @@ public class EnableMirrorForNdefActivity extends AppCompatActivity implements Nf
         super.onPause();
         if (mNfcAdapter != null)
             mNfcAdapter.disableReaderMode(this);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_activity_main, menu);
+
+        MenuItem mRead = menu.findItem(R.id.action_read);
+        mRead.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(EnableMirrorForNdefActivity.this, NtagDataReadingActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mWrite = menu.findItem(R.id.action_write);
+        mWrite.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(EnableMirrorForNdefActivity.this, WriteActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mWriteProtection = menu.findItem(R.id.action_write_protection);
+        mWriteProtection.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(EnableMirrorForNdefActivity.this, SetWriteProtectionActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mRemoveProtection = menu.findItem(R.id.action_remove_protection);
+        mRemoveProtection.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(EnableMirrorForNdefActivity.this, RemoveWriteProtectionActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mSpecialSettings = menu.findItem(R.id.action_special_settings);
+        mSpecialSettings.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(EnableMirrorForNdefActivity.this, SpecialSettingsActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mWriteNdef = menu.findItem(R.id.action_write_ndef_message);
+        mWriteNdef.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(EnableMirrorForNdefActivity.this, WriteNdefMessageActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        MenuItem mEnableMirrorNdefMessage = menu.findItem(R.id.action_enable_ndef_message_mirror);
+        mEnableMirrorNdefMessage.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(EnableMirrorForNdefActivity.this, EnableMirrorForNdefActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
+        return super.onCreateOptionsMenu(menu);
     }
 }
