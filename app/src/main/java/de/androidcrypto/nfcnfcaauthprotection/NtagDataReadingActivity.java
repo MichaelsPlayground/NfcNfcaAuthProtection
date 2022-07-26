@@ -673,6 +673,16 @@ public class NtagDataReadingActivity extends AppCompatActivity implements NfcAda
             }
         });
 
+        MenuItem mClearTag = menu.findItem(R.id.action_clear_tag);
+        mClearTag.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                Intent i = new Intent(NtagDataReadingActivity.this, ClearTagActivity.class);
+                startActivity(i);
+                return false;
+            }
+        });
+
         return super.onCreateOptionsMenu(menu);
     }
 
