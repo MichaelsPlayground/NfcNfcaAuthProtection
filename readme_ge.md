@@ -114,18 +114,49 @@ protection" sowie "8.8.2 Limiting negative verification attempts" zu finden.
 Diese App entfernt einen mit dem vorigen Menuepunkt eingerichteten Schutz. Hierzu ist das korrekte 
 Passwort sowie PACK einzugeben. Nach erfolgreicher Authentifizierung wird die erste "geschuetzte" 
 Seite auf FFh (= 255) gesetzt - da diese Seite weit oberhalb der maximalen Seitenzahl liegt ist der 
-gesamte Tag damit nicht mehr geschuetzt. Zusaetzlich wird das Passwortfeld mit FFh FFh FFh FFh und der 
+gesamte Tag damit nicht mehr geschuetzt. Zusaetzlich wird das Passwortfeld mit FFh FFh FFh FFh und der  
 PACK mit 00h 00h belegt.
 
 **special settings / Spezialaufgaben**
 
 Die Funktionen in diesem Menue ermoeglichen 2 interessante Spezialaufgaben - die Aktivierung des Tag- 
-internen Lesezaehlers sowie die Spiegelung (besser Einblendung) der Tag-ID und/oder des Zaehlers in  
+internen Lesezaehlers sowie die Spiegelung (besser Einblendung) der Tag-ID und/oder des Zaehlers in   
 den freien Benutzerspeicher des Tags.
 
-- enable counter / aktiviere den Zaehler
+- enable counter / aktiviere den Zaehler: Mit der Aktivierung des Zaehlers wird der Tag-interne  
+Zaehler bei jedem Auslesevorgang um 1 erhoeht. Der Zaehler kann zwar wieder deaktiviert werden  
+(siehe naechste Funktion), aber eine Zuruecksetzung ist nicht vorgesehen. Der Zaehlerstand kann mit  
+einem speziellen Befehl ausgelesen werden - wie es im Menuepunkt "read from Tag / Tag lesen" 
+gezeigt wird.
 
-Mit der 
+- disable counter /deaktiviere den Zaehler: nach der Deaktivierung des Zaehlers fuehrt ein Ausleseversuch  
+zu einem Fehler.
+
+Bezueglich der naechsten Funktionen erklaere ich vorab die Funktionsweise des "mirroring" bzw. der 
+Spiegelung. Sowohl die eindeutige "Serien-" Nummer (UID) als auch der Zaehlerstand koennen von vielen 
+Android-Smartphones nicht ausgelesen werden. Unter Apple's IOS koennen NFC Tag nur ueber die NDEF-
+Technologie gelesen werden und nicht "Low level" mittels NFCA. Damit diese Informationen z.B. aus 
+Sicherheitsgruenden lesbar sind hat der Tag-Hersteller NXP die Spiegelung oder Einblendung in den 
+Benutzerspeicherplatz vorgesehen. Das bedeutet im Klartext: die Werte des UID und/oder des Zaehlers   
+werden virtuell ueber die frueheren Daten gelegt und beim auslesen stattdessen ausgelesen. 
+ 
+- activate UID mirror / aktiviere die Spiegelung des UID: nach der Aktivierung dieser Funktion wird 
+der 7-stellige UID in Hex-Enkodierung ab Seite 05 abgelegt. Parallel zur Aktivierung dieser Funktion   
+ist es auch notwendig, die erste Seite der Spiegelung anzugeben - fuer unser Beispiel ist es Seite 5.  
+Der UID ist stets 8 Stellen lang, daher werden 3 Seiten je 4 Byte und eine Seite mit 3 Byte (insgesamt 
+14 Byte) fuer die Spiegelung benoetigt.  
+Schauen Sie sich die Werte in "read from Tag / Tag lesen" an:
+
+Page 00: 04 40 89 45 : die ersten 3 Byte 04 40 89 sind die ersten 3 Stellen der UIDs, die weiteren  
+Stellen befinden sich in den folgenden Seiten. 
+
+Page 04: 38 20 6c 65: Da sind die Hex-Ascii Werte fuer den Text "8 let"
+
+Page 05: bei deaktivierter UID-Spiegelung steht hier 74 74 65 72 = "tter". Haben Sie die UID-
+Spiegelung aktiviert erscheint stattdessen: 30 34 34 30 - diese Werte entsprechen dem Ascii-Text 
+"0440" - schauen Sie auf Seite 00 und finden fuer die ersten beiden Bytes der UID "04 40".
+
+- activate counter mirror / aktiviere die Spiegelung des Zaehlers: 
 
 
 

@@ -166,13 +166,13 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
 
                     switch (taskString) {
                         case ENABLE_COUNTER_TASK: {
-                                response = writeEnableCounter(nfcA);
-                                if (response == null) {
-                                    writeToUiAppend(commandReponse, "Enabling the counter: FAILURE");
-                                    return;
-                                } else {
-                                    writeToUiAppend(commandReponse, "Enabling the counter: SUCCESS - code: " + Utils.bytesToHex(response));
-                                }
+                            response = writeEnableCounter(nfcA);
+                            if (response == null) {
+                                writeToUiAppend(commandReponse, "Enabling the counter: FAILURE");
+                                return;
+                            } else {
+                                writeToUiAppend(commandReponse, "Enabling the counter: SUCCESS - code: " + Utils.bytesToHex(response));
+                            }
                             break;
                         }
                         case DISABLE_COUNTER_TASK: {
@@ -440,6 +440,9 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
          *
          */
 
+        // first we need to disable the counter itself
+        writeDisableCounter(nfcA);
+
         writeToUiAppend(commandReponse, "* Start disabling the Uid mirror *");
         // read page 227 = Configuration page 0
         byte[] readPageResponse = getTagDataResponse(nfcA, 227); // this is for NTAG216 only
@@ -473,6 +476,7 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             } else {
                 writeToUiAppend(commandReponse, "FAILURE: no writing on the tag");
             }
+
         }
         return null;
     }
@@ -496,13 +500,16 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
          *
          * MIRROR_PAGE byte defines the start of mirror.
          *
-         * It is import that the end of mirror is within the user memory. These lengths apply:
+         * It is important that the end of mirror is within the user memory. These lengths apply:
          * Uid mirror: 14 bytes
          * NFC counter mirror: 6 bytes
          * Uid + NFC counter mirror: 21 bytes (14 bytes for Uid and 1 byte separation + 6 bytes counter value
          * Separator is x (0x78)
          *
          */
+
+        // first we need to activate the counter itself
+        writeEnableCounter(nfcA);
 
         writeToUiAppend(commandReponse, "* Start enabling the Counter mirror *");
         // read page 227 = Configuration page 0
@@ -569,6 +576,9 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
          *
          */
 
+        // first we need to activate the counter itself
+        writeEnableCounter(nfcA);
+
         writeToUiAppend(commandReponse, "* Start enabling the Counter mirror *");
         // read page 227 = Configuration page 0
         byte[] readPageResponse = getTagDataResponse(nfcA, 227); // this is for NTAG216 only
@@ -603,6 +613,8 @@ public class SpecialSettingsActivity extends AppCompatActivity implements NfcAda
             } else {
                 writeToUiAppend(commandReponse, "FAILURE: no writing on the tag");
             }
+            // now we need to activate the counter itself
+            writeEnableCounter(nfcA);
         }
         return null;
     }
