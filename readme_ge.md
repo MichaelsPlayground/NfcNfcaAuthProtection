@@ -123,7 +123,7 @@ Die Funktionen in diesem Menue ermoeglichen 2 interessante Spezialaufgaben - die
 internen Lesezaehlers sowie die Spiegelung (besser Einblendung) der Tag-ID und/oder des Zaehlers in  
 den freien Benutzerspeicher des Tags.
 
-*enable counter / aktiviere den Zaehler*
+- enable counter / aktiviere den Zaehler
 
 Mit der 
 
