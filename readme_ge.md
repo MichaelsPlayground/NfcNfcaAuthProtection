@@ -78,3 +78,53 @@ dem Menuepunkt "write protection".
 
 Unterhalb des Eingabefeldes wird ein Logfile ausgegeben.
 
+**write protection / Schreibschutz einrichten**
+
+Mit diesem Menuepunkt richten Sie einen Schreib- und zusaetzlich eine Leseschutz fuer den Tag ein. 
+Das Passwort besteht aus exakt 4 Buchstaben und Ziffern ("alphanumerisch"). Zusaetzlich vergeben 
+Sie ein 2-stelliges "PACK", das ist das "correct password acknowledge" (= "Antwort bei 
+korrektem Passwort"), ein. 
+
+Die Bedeutung ist des PACK recht einfach: Nach einem Authentisierungsversuch antwortet der Tag 
+mit dem PACK (d.h. das Passwort ist korrekt) oder einem "NAK" (="no acknowledge" / "nicht 
+richtig"). Das ist eine zusaetzliche Sicherheitsstufe fuer Ihr Programm - wenn Sie den PACK 
+auswerten.
+
+Zusaetzlich ist es notwendig, die Seite anzugeben, ab der der Schreib- (und eventuell Lese-) 
+Zugriff geschuetzt ist.
+
+Der folgende Switch bestimmt, ob der Speicherbereich "nur" schreibgeschuetzt ist oder 
+zusaetzlich auch einen Leseschutz erhaelt.
+
+Ganz wichtig fuer alle Nutzer von NDEF-Nachrichten auf dem Tag: sobald der Stick einen 
+Leseschutz hat (d.h. fuer das Lesen der NDEF-Nachricht ein Passwort notwendig ist), kann 
+der Tag nicht mehr ueber die ueblichen Routinen verarbeitet werden - er benoetigt stets ein 
+spezielles Leseprogramm.
+
+Ebenfalls wichtig: es gibt keine Zuruecksetzungsmoeglichkeit wenn das Passwort vergessen 
+worden ist; der Tag ist dann wertlos. 
+
+Nur zur Information (da im Programm nicht implementiert): zusaetzlich zum Passwortschutz 
+kann auch die maximale Zahl an Falscheingaben fuer das Passwort programmiert werden. 
+Weitere Informationen sind im Datenblatt auf Seite 30 unter Punkt "8.8 Password verification 
+protection" sowie "8.8.2 Limiting negative verification attempts" zu finden.
+
+**remove protection / Schreibschutz entfernen**
+
+Diese App entfernt einen mit dem vorigen Menuepunkt eingerichteten Schutz. Hierzu ist das korrekte 
+Passwort sowie PACK einzugeben. Nach erfolgreicher Authentifizierung wird die erste "geschuetzte" 
+Seite auf FFh (= 255) gesetzt - da diese Seite weit oberhalb der maximalen Seitenzahl liegt ist der 
+gesamte Tag damit nicht mehr geschuetzt. Zusaetzlich wird das Passwortfeld mit FFh FFh FFh FFh und der 
+PACK mit 00h 00h belegt.
+
+**special settings / Spezialaufgaben**
+
+Die Funktionen in diesem Menue ermoeglichen 2 interessante Spezialaufgaben - die Aktivierung des Tag- 
+internen Lesezaehlers sowie die Spiegelung (besser Einblendung) der Tag-ID und/oder des Zaehlers in  
+den freien Benutzerspeicher des Tags.
+
+
+
+
+
+
