@@ -114,7 +114,7 @@ protection" sowie "8.8.2 Limiting negative verification attempts" zu finden.
 Diese App entfernt einen mit dem vorigen Menuepunkt eingerichteten Schutz. Hierzu ist das korrekte 
 Passwort sowie PACK einzugeben. Nach erfolgreicher Authentifizierung wird die erste "geschuetzte" 
 Seite auf FFh (= 255) gesetzt - da diese Seite weit oberhalb der maximalen Seitenzahl liegt ist der 
-gesamte Tag damit nicht mehr geschuetzt. Zusaetzlich wird das Passwortfeld mit FFh FFh FFh FFh und der   
+gesamte Tag damit nicht mehr geschuetzt. Zusaetzlich wird das Passwortfeld mit FFh FFh FFh FFh und der 
 PACK mit 00h 00h belegt.
 
 **special settings / Spezialaufgaben**
