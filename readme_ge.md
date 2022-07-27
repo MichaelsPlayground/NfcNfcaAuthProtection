@@ -310,5 +310,8 @@ Tag vorhanden sind. Diese Aktion kann bis zu einer Minute dauern und daher ist e
 Ihr Smartphone auf den Tag zu legen und nicht mehr zu bewegen, um eine "Tag lost exception" zu 
 vermeiden.
 
+Diese Aktion kann aber nur bei einem Tag durchgefuehrt werden, welcher keinen Schreibschutz aktiviert  
+hat. Deaktivieren Sie also vorher eine eventuell eingerichtete "write protection". 
+
 
 
