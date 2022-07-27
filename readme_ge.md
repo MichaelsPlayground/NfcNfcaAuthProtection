@@ -106,7 +106,7 @@ worden ist; der Tag ist dann wertlos.
 
 Nur zur Information (da im Programm nicht implementiert): zusaetzlich zum Passwortschutz 
 kann auch die maximale Zahl an Falscheingaben fuer das Passwort programmiert werden. 
-Weitere Informationen sind im Datenblatt auf Seite 30 unter Punkt "8.8 Password verification 
+Weitere Informationen sind im Datenblatt auf Seite 30 unter Punkt "8.8 Password verification  
 protection" sowie "8.8.2 Limiting negative verification attempts" zu finden.
 
 **remove protection / Schreibschutz entfernen**
@@ -114,18 +114,18 @@ protection" sowie "8.8.2 Limiting negative verification attempts" zu finden.
 Diese App entfernt einen mit dem vorigen Menuepunkt eingerichteten Schutz. Hierzu ist das korrekte 
 Passwort sowie PACK einzugeben. Nach erfolgreicher Authentifizierung wird die erste "geschuetzte" 
 Seite auf FFh (= 255) gesetzt - da diese Seite weit oberhalb der maximalen Seitenzahl liegt ist der 
-gesamte Tag damit nicht mehr geschuetzt. Zusaetzlich wird das Passwortfeld mit FFh FFh FFh FFh und der  
+gesamte Tag damit nicht mehr geschuetzt. Zusaetzlich wird das Passwortfeld mit FFh FFh FFh FFh und der   
 PACK mit 00h 00h belegt.
 
 **special settings / Spezialaufgaben**
 
-Die Funktionen in diesem Menue ermoeglichen 2 interessante Spezialaufgaben - die Aktivierung des Tag- 
+Die Funktionen in diesem Menue ermoeglichen 2 interessante Spezialaufgaben - die Aktivierung des Tag-  
 internen Lesezaehlers sowie die Spiegelung (besser Einblendung) der Tag-ID und/oder des Zaehlers in   
 den freien Benutzerspeicher des Tags.
 
-- enable counter / aktiviere den Zaehler: Mit der Aktivierung des Zaehlers wird der Tag-interne  
-Zaehler bei jedem Auslesevorgang um 1 erhoeht. Der Zaehler kann zwar wieder deaktiviert werden  
-(siehe naechste Funktion), aber eine Zuruecksetzung ist nicht vorgesehen. Der Zaehlerstand kann mit  
+- enable counter / aktiviere den Zaehler: Mit der Aktivierung des Zaehlers wird der Tag-interne 
+Zaehler bei jedem Auslesevorgang um 1 erhoeht. Der Zaehler kann zwar wieder deaktiviert werden 
+(siehe naechste Funktion), aber eine Zuruecksetzung ist nicht vorgesehen. Der Zaehlerstand kann mit 
 einem speziellen Befehl ausgelesen werden - wie es im Menuepunkt "read from Tag / Tag lesen" 
 gezeigt wird.
 
@@ -137,10 +137,10 @@ Spiegelung. Sowohl die eindeutige "Serien-" Nummer (UID) als auch der Zaehlersta
 Android-Smartphones nicht ausgelesen werden. Unter Apple's IOS koennen NFC Tag nur ueber die NDEF-
 Technologie gelesen werden und nicht "Low level" mittels NFCA. Damit diese Informationen z.B. aus 
 Sicherheitsgruenden lesbar sind hat der Tag-Hersteller NXP die Spiegelung oder Einblendung in den 
-Benutzerspeicherplatz vorgesehen. Das bedeutet im Klartext: die Werte des UID und/oder des Zaehlers   
+Benutzerspeicherplatz vorgesehen. Das bedeutet im Klartext: die Werte des UID und/oder des Zaehlers 
 werden virtuell ueber die frueheren Daten gelegt und beim auslesen stattdessen ausgelesen. 
 
-Fuer eigene Versuche empfehle ich, parallel die App "NfcNfcaTagHexDump" auf das Smartphone zu spielen, 
+Fuer eigene Versuche empfehle ich, parallel die App "NfcNfcaTagHexDump" auf das Smartphone zu spielen,  
 denn damit wird der komplette Speicherinhalt des Tags uebersichtlich angezeigt.
 
 Zum besseren Vergleich - so sieht ein unbeschriebener NTAG216 im Hexdump aus:
@@ -169,8 +169,8 @@ User memory:
 Spielen wir nun mit den verschiedenen Mirror/Spiegelungs-Funktionen
 
 - activate UID mirror / aktiviere die Spiegelung des UID: nach der Aktivierung dieser Funktion wird 
-der 7-stellige UID in Hex-Enkodierung ab Seite 05 abgelegt. Parallel zur Aktivierung dieser Funktion   
-ist es auch notwendig, die erste Seite der Spiegelung anzugeben - fuer unser Beispiel ist es Seite 5.  
+der 7-stellige UID in Hex-Enkodierung ab Seite 05 abgelegt. Parallel zur Aktivierung dieser Funktion 
+ist es auch notwendig, die erste Seite der Spiegelung anzugeben - fuer unser Beispiel ist es Seite 5.   
 Der UID ist stets 8 Stellen lang, daher werden 3 Seiten je 4 Byte und eine Seite mit 3 Byte (insgesamt 
 14 Byte) fuer die Spiegelung benoetigt. Schauen Sie sich die Werte im HexDump an:
 
@@ -197,8 +197,8 @@ Page 05: bei deaktivierter UID-Spiegelung steht hier 74 74 65 72 = "tter". Haben
 Spiegelung aktiviert erscheint stattdessen: 30 34 34 30 - diese Werte entsprechen dem Ascii-Text 
 "0440" - schauen Sie auf Seite 00 und finden fuer die ersten beiden Bytes der UID "04 40".
 
-- activate counter mirror / aktiviere die Spiegelung des Zaehlers: nach Aktivierung des Zaehlers  
-wird der Dezimalwert des Zaehlers ab Adresse Seite 05 als 6 Byte lange Hexadezimal Zahl angezeigt. 
+- activate counter mirror / aktiviere die Spiegelung des Zaehlers: nach Aktivierung des Zaehlers 
+wird der Dezimalwert des Zaehlers ab Adresse Seite 05 als 6 Byte lange Hexadezimal Zahl angezeigt.  
 In meinem Beispiel entspricht "5Ah" der Zahl 90 = es gab 90 Lesungen vom Tag.
 
 ```plaintext
@@ -278,7 +278,7 @@ Hinweis: die Internetadresse fuehrt ins Leere).
 Aktivieren Sie nun die passende Spiegelung fuer diese Nachricht:
 
 - enable mirror for NDEF message / aktivieren Sie die Spiegelung fuer die NDEF-Nachricht: da die 
-URL-Adresse etwas laenger ist als die 4 Bytes in unseren "special settings" Beispielen ist die  
+URL-Adresse etwas laenger ist als die 4 Bytes in unseren "special settings" Beispielen ist die   
 Startadresse fuer die Spiegelung die Seite 0Fh und das Byte 1 darin. Nach der Aktivierung finden 
 Sie diesen Inhalt auf dem Tag:
 
