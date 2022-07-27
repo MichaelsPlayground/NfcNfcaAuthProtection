@@ -129,7 +129,7 @@ Zaehler bei jedem Auslesevorgang um 1 erhoeht. Der Zaehler kann zwar wieder deak
 einem speziellen Befehl ausgelesen werden - wie es im Menuepunkt "read from Tag / Tag lesen" 
 gezeigt wird.
 
-- disable counter /deaktiviere den Zaehler: nach der Deaktivierung des Zaehlers fuehrt ein Ausleseversuch  
+- disable counter /deaktiviere den Zaehler: nach der Deaktivierung des Zaehlers fuehrt ein Ausleseversuch 
 zu einem Fehler.
 
 Bezueglich der naechsten Funktionen erklaere ich vorab die Funktionsweise des "mirroring" bzw. der 
