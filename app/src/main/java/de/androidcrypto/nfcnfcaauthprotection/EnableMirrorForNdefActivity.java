@@ -135,6 +135,49 @@ public class EnableMirrorForNdefActivity extends AppCompatActivity implements Nf
         });
     }
 
+    private byte[] writeEnableCounter(NfcA nfcA) {
+        /**
+         * WARNING: this command is hardcoded to work with a NTAG216
+         * the bit for enabling or disabling the counter is in pages 42/132/228 (0x2A / 0x84 / 0xE4)
+         * depending on the tag type
+         *
+         * byte 0 of this pages holds the ACCESS byte
+         * bit 4 is the counter enabling flag, 0 = disabled, 1 = enabled
+         *
+         * bit 3 is the counter password protection 0 = NFC counter not protected, 1 = enabled
+         * If the NFC counter password protection is enabled, the NFC tag will only respond to a
+         * READ_CNT command with the NFC counter value after a valid password verification
+         * This bit is NOT set in this command
+         */
+
+        writeToUiAppend(responseField, "* Start enabling the counter *");
+        // first read the page, set bit to 1 and save the page back to the tag
+        // read page 228 = Configuration page 1
+        byte[] readPageResponse = getTagDataResponse(nfcA, 228); // this is for NTAG216 only
+        if (readPageResponse != null) {
+            // get byte 0 = ACCESS byte
+            byte accessByte = readPageResponse[0];
+            writeToUiAppend(responseField, "ACCESS content old: " + Utils.printByteBinary(accessByte));
+            // setting bit 4
+            byte accessByteNew;
+            accessByteNew = Utils.setBitInByte(accessByte, 4);
+            writeToUiAppend(responseField, "ACCESS content new: " + Utils.printByteBinary(accessByteNew));
+            // rebuild the page data
+            readPageResponse[0] = accessByteNew;
+            // write the page back to the tag
+            byte[] writePageResponse = writeTagDataResponse(nfcA, 228, readPageResponse); // this is for NTAG216 only
+            writeToUiAppend(responseField, "write page to tag: " + Utils.bytesToHex(readPageResponse));
+            //byte[] writePageResponse = writeTagDataResponse(nfcA, 5, readPageResponse); // this is for NTAG216 only
+            if (writePageResponse != null) {
+                writeToUiAppend(responseField, "SUCCESS: writing with response: " + Utils.bytesToHex(writePageResponse));
+                return readPageResponse;
+            } else {
+                writeToUiAppend(responseField, "FAILURE: no writing on the tag");
+            }
+        }
+        return null;
+    }
+
     private byte[] writeEnableUidCounterMirrorNdef(NfcA nfcA) {
         /**
          * WARNING: this command is hardcoded to work with a NTAG216
@@ -163,6 +206,9 @@ public class EnableMirrorForNdefActivity extends AppCompatActivity implements Nf
          * This function writes the MIRROR_PAGE and MIRROR_BYTE to the place where the WRITE NDEF MESSAGE needs it
          *
          */
+
+        // first we need to activate the counter itself
+        writeEnableCounter(nfcA);
 
         writeToUiAppend(responseField, "* Start enabling the Counter mirror *");
         // read page 227 = Configuration page 0

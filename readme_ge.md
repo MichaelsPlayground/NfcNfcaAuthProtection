@@ -139,25 +139,50 @@ Technologie gelesen werden und nicht "Low level" mittels NFCA. Damit diese Infor
 Sicherheitsgruenden lesbar sind hat der Tag-Hersteller NXP die Spiegelung oder Einblendung in den 
 Benutzerspeicherplatz vorgesehen. Das bedeutet im Klartext: die Werte des UID und/oder des Zaehlers   
 werden virtuell ueber die frueheren Daten gelegt und beim auslesen stattdessen ausgelesen. 
+
+Fuer eigene Versuche empfehle ich, parallel die App "NfcNfcaTagHexDump" auf das Smartphone zu spielen, 
+denn damit wird der komplette Speicherinhalt des Tags uebersichtlich angezeigt.
  
 - activate UID mirror / aktiviere die Spiegelung des UID: nach der Aktivierung dieser Funktion wird 
 der 7-stellige UID in Hex-Enkodierung ab Seite 05 abgelegt. Parallel zur Aktivierung dieser Funktion   
 ist es auch notwendig, die erste Seite der Spiegelung anzugeben - fuer unser Beispiel ist es Seite 5.  
 Der UID ist stets 8 Stellen lang, daher werden 3 Seiten je 4 Byte und eine Seite mit 3 Byte (insgesamt 
-14 Byte) fuer die Spiegelung benoetigt.  
-Schauen Sie sich die Werte in "read from Tag / Tag lesen" an:
+14 Byte) fuer die Spiegelung benoetigt. Schauen Sie sich die Werte in "read from Tag / Tag lesen" an:
 
 Page 00: 04 40 89 45 : die ersten 3 Byte 04 40 89 sind die ersten 3 Stellen der UIDs, die weiteren  
 Stellen befinden sich in den folgenden Seiten. 
 
-Page 04: 38 20 6c 65: Da sind die Hex-Ascii Werte fuer den Text "8 let"
+Page 04: 38 20 6c 65: Das sind die Hex-Ascii Werte fuer den Text "8 let"
 
 Page 05: bei deaktivierter UID-Spiegelung steht hier 74 74 65 72 = "tter". Haben Sie die UID-
 Spiegelung aktiviert erscheint stattdessen: 30 34 34 30 - diese Werte entsprechen dem Ascii-Text 
 "0440" - schauen Sie auf Seite 00 und finden fuer die ersten beiden Bytes der UID "04 40".
 
-- activate counter mirror / aktiviere die Spiegelung des Zaehlers: 
+- activate counter mirror / aktiviere die Spiegelung des Zaehlers: bei deaktivierter Zaehler- 
+Spiegelung stehen hier diese Werte:
 
+Page 04: 38 20 6c 65 = Das sind die Hex-Ascii Werte fuer den Text "8 let"
+
+Page 05: 74 74 65 72 = Das sind die Hex-Ascii Werte fuer den Text "tter".
+
+Nach Aktivierung des Zaehlers wird der 6-stellige Dezimalwert des Zaehlers ab Adresse Seite 05  
+vorgemerkt.
+
+
+```plaintext
+00000010:03 40 D1 01 3C 55 03 61 |.....U.a  
+00000018:6E 64 72 6F 69 64 63 72 |ndroidcr  
+00000020:79 70 74 6F 2E 62 70 6C |ypto.bpl  
+00000028:61 63 65 64 2E 6E 65 74 |aced.net  
+00000030:2F 74 65 73 74 2E 68 74 |.test.ht  
+00000038:6D 6C 3F 64 3D 30 34 34 |ml.d.044  
+00000040:30 38 39 38 32 33 35 35 |08982355  
+00000048:42 38 31 78 30 30 30 30 |B81x0000  
+00000050:36 35 FE 00 00 00 00 00 |65......
+
+00000388:00 00 00 BD D4 00 0F FF |........  
+00000390:10 05 00 00 00 00 00 00 |........
+```
 
 
 
