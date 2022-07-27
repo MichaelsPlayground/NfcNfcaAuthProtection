@@ -142,12 +142,51 @@ werden virtuell ueber die frueheren Daten gelegt und beim auslesen stattdessen a
 
 Fuer eigene Versuche empfehle ich, parallel die App "NfcNfcaTagHexDump" auf das Smartphone zu spielen, 
 denn damit wird der komplette Speicherinhalt des Tags uebersichtlich angezeigt.
+
+Zum besseren Vergleich - so sieht ein unbeschriebener NTAG216 im Hexdump aus:
+
+```plaintext
+Header:
+00000000:04 40 89 45 82 35 5B 81 |...E.5..  
+00000008:6D 48 00 00 E1 10 6D 00 |mH....m. 
+User memory:
+00000010:03 00 FE 00 00 00 00 00 |........ 
+00000018:00 00 00 00 00 00 00 00 |........
+...
+Footer:
+00000388:00 00 00 BD 04 00 00 FF |........  
+00000390:00 05 00 00 00 00 00 00 |........  
+```
  
+Nachdem mittels "write tag" die Zeichenfolge "8 letter" geschrieben wurde sieht der Tag so aus:
+
+```plaintext
+User memory:
+00000010:38 20 6C 65 74 74 65 72 |8.letter  
+00000018:00 00 00 00 00 00 00 00 |........
+```
+
+Spielen wir nun mit den verschiedenen Mirror/Spiegelungs-Funktionen
+
 - activate UID mirror / aktiviere die Spiegelung des UID: nach der Aktivierung dieser Funktion wird 
 der 7-stellige UID in Hex-Enkodierung ab Seite 05 abgelegt. Parallel zur Aktivierung dieser Funktion   
 ist es auch notwendig, die erste Seite der Spiegelung anzugeben - fuer unser Beispiel ist es Seite 5.  
 Der UID ist stets 8 Stellen lang, daher werden 3 Seiten je 4 Byte und eine Seite mit 3 Byte (insgesamt 
-14 Byte) fuer die Spiegelung benoetigt. Schauen Sie sich die Werte in "read from Tag / Tag lesen" an:
+14 Byte) fuer die Spiegelung benoetigt. Schauen Sie sich die Werte im HexDump an:
+
+```plaintext
+Header:
+00000000:04 40 89 45 82 35 5B 81 |...E.5..  
+00000008:6D 48 00 00 E1 10 6D 00 |mH....m. 
+User memory:
+00000010:38 20 6C 65 30 34 34 30 |8.le0440 
+00000018:38 39 38 32 33 35 35 42 |8982355B 
+00000020:38 31 00 00 00 00 00 00 |81......  
+...
+Footer:
+00000388:00 00 00 BD 44 00 05 FF |....D...  
+00000390:00 05 00 00 00 00 00 00 |........ 
+```
 
 Page 00: 04 40 89 45 : die ersten 3 Byte 04 40 89 sind die ersten 3 Stellen der UIDs, die weiteren  
 Stellen befinden sich in den folgenden Seiten. 
@@ -158,16 +197,90 @@ Page 05: bei deaktivierter UID-Spiegelung steht hier 74 74 65 72 = "tter". Haben
 Spiegelung aktiviert erscheint stattdessen: 30 34 34 30 - diese Werte entsprechen dem Ascii-Text 
 "0440" - schauen Sie auf Seite 00 und finden fuer die ersten beiden Bytes der UID "04 40".
 
-- activate counter mirror / aktiviere die Spiegelung des Zaehlers: bei deaktivierter Zaehler- 
-Spiegelung stehen hier diese Werte:
+- activate counter mirror / aktiviere die Spiegelung des Zaehlers: nach Aktivierung des Zaehlers  
+wird der Dezimalwert des Zaehlers ab Adresse Seite 05 als 6 Byte lange Hexadezimal Zahl angezeigt. 
+In meinem Beispiel entspricht "5Ah" der Zahl 90 = es gab 90 Lesungen vom Tag.
 
-Page 04: 38 20 6c 65 = Das sind die Hex-Ascii Werte fuer den Text "8 let"
+```plaintext
+Header:
+00000000:04 40 89 45 82 35 5B 81 |...E.5..  
+00000008:6D 48 00 00 E1 10 6D 00 |mH....m. 
+User memory:
+00000010:38 20 6C 65 30 30 30 30 |8.le0000 
+00000018:35 41 00 00 00 00 00 00 |5A...... 
+00000020:00 00 00 00 00 00 00 00 |........  
+...
+Footer:
+00000388:00 00 00 BD 44 00 05 FF |....D...  
+00000390:10 05 00 00 00 00 00 00 |........  
+```
 
-Page 05: 74 74 65 72 = Das sind die Hex-Ascii Werte fuer den Text "tter".
+- activate UID + counter mirror / aktiviere die Spiegelung der UID und des Zaehlers: zuerst wird ab 
+Adresse Seite 05 die UID eingeblendet, gefolgt von einem "x" Zeichen als Trenner und nachfolgend der 
+6 stellige Zaehler (der nun "5Ch" = Zaehlerstand 92 enthaelt):
 
-Nach Aktivierung des Zaehlers wird der 6-stellige Dezimalwert des Zaehlers ab Adresse Seite 05  
-vorgemerkt.
+```plaintext
+Header:
+00000000:04 40 89 45 82 35 5B 81 |...E.5..  
+00000008:6D 48 00 00 E1 10 6D 00 |mH....m. 
+User memory:
+00000010:38 20 6C 65 30 34 34 30 |8.le0440 
+00000018:38 39 38 32 33 35 35 42 |8982355B 
+00000020:38 31 78 30 30 30 30 35 |81x00005  
+00000028:43 00 00 00 00 00 00 00 |C.......  
+...
+Footer:
+00000388:00 00 00 BD 44 00 05 FF |....D...  
+00000390:10 05 00 00 00 00 00 00 |........  
+```
 
+- deactivate all mirror / deaktiviere alle Spiegelungen: sobald die Spiegelungen deaktivert sind 
+zeigt der Speicher wieder seinen "urspruenglichen" Inhalt an.
+
+Kommen wir nun zu einem praktischen Beispiel fuer die Spiegelung. Sie moechten auf dem Tag eine 
+NDEF-formatierte Nachricht speichern, welche eine Zugangs-Internetadresse ist. Mit dem Aufruf der   
+Seite moechten Sie auch die Tag-UID sowie den aktuellen Zaehlerstand uebergeben. Rufen Sie hierzu 
+diesen Menuepunkt auf: 
+
+- write NDEF message / schreibe NDEF Nachricht: Die Basisadresse in unserem Beispiel lautet  
+
+http://androidcrypto.bplaced.net/test.html?d=
+
+gefolgt von einem String "UUUUUUUUUUUUUUxCCCCCC" - die komplette URL lautet also: 
+
+http://androidcrypto.bplaced.net/test.html?d=UUUUUUUUUUUUUUxCCCCCC
+
+Sie werden es erraten haben - die "UU.." stehen als Platzhalter fuer die UID und die "CC.." fuer 
+den Zaehler.
+
+Beschreiben Sie den Tag und erhalten dieses Ergebnis im HexDump:
+
+```plaintext
+00000010:03 40 D1 01 3C 55 03 61 |.....U.a  
+00000018:6E 64 72 6F 69 64 63 72 |ndroidcr  
+00000020:79 70 74 6F 2E 62 70 6C |ypto.bpl  
+00000028:61 63 65 64 2E 6E 65 74 |aced.net  
+00000030:2F 74 65 73 74 2E 68 74 |.test.ht  
+00000038:6D 6C 3F 64 3D 55 55 55 |ml.d.UUU 
+00000040:55 55 55 55 55 55 55 55 |UUUUUUUU  
+00000048:55 55 55 78 43 43 43 43 |UUUxCCCC  
+00000050:43 43 FE 00 00 00 00 00 |CC......  
+...
+00000388:00 00 00 BD D4 00 0F FF |........  
+00000390:00 05 00 00 00 00 00 00 |........  
+```
+
+Kehren Sie nun mit der "Home"-Taste auf Ihren Smartphone Startbildschirm zurueck und halten den 
+Tag an die Rueckseite - das Smartphone erkennt die URL in der NDEF-Nachricht und versucht ein 
+geeignetes Programm zu finden - ein (oder mehrere) Browser werden bei Ihnen bestimmt angeboten. 
+Hinweis: die Internetadresse fuehrt ins Leere).
+
+Aktivieren Sie nun die passende Spiegelung fuer diese Nachricht:
+
+- enable mirror for NDEF message / aktivieren Sie die Spiegelung fuer die NDEF-Nachricht: da die 
+URL-Adresse etwas laenger ist als die 4 Bytes in unseren "special settings" Beispielen ist die  
+Startadresse fuer die Spiegelung die Seite 0Fh und das Byte 1 darin. Nach der Aktivierung finden 
+Sie diesen Inhalt auf dem Tag:
 
 ```plaintext
 00000010:03 40 D1 01 3C 55 03 61 |.....U.a  
@@ -179,10 +292,23 @@ vorgemerkt.
 00000040:30 38 39 38 32 33 35 35 |08982355  
 00000048:42 38 31 78 30 30 30 30 |B81x0000  
 00000050:36 35 FE 00 00 00 00 00 |65......
-
+...
 00000388:00 00 00 BD D4 00 0F FF |........  
 00000390:10 05 00 00 00 00 00 00 |........
 ```
+
+Damit wird der Browser folgende Internetadresse aufrufen:
+
+http://androidcrypto.bplaced.net/test.html?d=04408982355B81x000065
+
+Ein hinter der Adresse liegendes Script kann nun auswerten, das der Tag mit der Seriennummer (UID)
+04408982355B81 nun zum 101 Mal (65h) ausgelesen wurde und Kontakt zum Server aufnimmt.
+
+- clear tag to factory settings / setzte den Tag auf Werkseinstellungen zurueck: Dieser Menuepunkt  
+beschreibt den kompletten Speicher eines NTAG216 mit den Werten, wie sie bei einem fabrikneuen 
+Tag vorhanden sind. Diese Aktion kann bis zu einer Minute dauern und daher ist es sehr wichtig, 
+Ihr Smartphone auf den Tag zu legen und nicht mehr zu bewegen, um eine "Tag lost exception" zu 
+vermeiden.
 
 
 
